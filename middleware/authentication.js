@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv')
-const { resposne } = require("../Middleware/resposne");
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv'
+import resposne  from "../middleware/resposne.js";
 dotenv.config()
 const secretKey = process.env.JWT_SECRET
 
@@ -37,6 +37,6 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-module.exports = authenticateToken;
+export default authenticateToken;
 
 

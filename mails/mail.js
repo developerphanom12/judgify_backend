@@ -1,8 +1,8 @@
-const dotenv = require('dotenv')
-const nodemailer = require('nodemailer');
+import dotenv from 'dotenv'
+import nodemailer from 'nodemailer';
 dotenv.config();
 
-async function sendGmail(subject, message, email) {
+async function sendGmail( first_name,last_name,email,company,mobile_number,country) {
     try {
         const user = process.env.EMAIL_USER;
         const pass = process.env.PASSWORD;
@@ -21,7 +21,7 @@ async function sendGmail(subject, message, email) {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${subject}</title>
+                <title>"User Registration  Email Verification"</title>
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -48,8 +48,12 @@ async function sendGmail(subject, message, email) {
             <body>
                 <div class="container">
                     <p class="message">Hello,</p>
-                    <p class="message">${message}</p>
+                    <p class="credentials"><strong>First Name:</strong> ${first_name}</p>
+                    <p class="credentials"><strong>Last Name:</strong> ${last_name}</p>
                     <p class="credentials"><strong>Email:</strong> ${email}</p>
+                    <p class="credentials"><strong>Comapny:</strong> ${company}</p>
+                    <p class="credentials"><strong>Mobile Number:</strong> ${mobile_number}</p>
+                    <p class="credentials"><strong>Country:</strong> ${country}</p>
                 </div>
             </body>
             </html>
@@ -58,7 +62,7 @@ async function sendGmail(subject, message, email) {
         const mailOptions = {
             from: user,
             to: email,
-            subject: "Today's Notes are Uploded",
+            subject: "User Registration  Email Verification",
             html: htmlContent,
         };
 
@@ -70,4 +74,4 @@ async function sendGmail(subject, message, email) {
     }
 }
 
-module.exports = { sendGmail };
+export default  sendGmail ;

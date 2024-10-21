@@ -1,22 +1,29 @@
-const express = require('express');
+import express from "express";
+import dotenv from 'dotenv';
+import path from 'path';
+import cors from 'cors';
+import admin from './routes/adminRoutes.js'
+import user from './routes/userRoutes.js'
+import { fileURLToPath } from "url";
+
 const app = express();
-const dotenv = require('dotenv');
-const path = require('path');
-const cors = require('cors');
-const admin = require('./routes/adminRoutes')
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-app.use(express.json()); 
+app.use(express.json());          
 
-app.use(cors({ origin: true })); 
+app.use(cors({ origin: true }));
 
-   
+
 const port = process.env.PORT || 6000;
 
 
 app.use('/api/admin', admin)
 
+app.use('/api/user',user)
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
