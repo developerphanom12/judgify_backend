@@ -1,11 +1,81 @@
 const saltRounds = 10
 import bcrypt from "bcrypt"
-import { adminRegister, changeforgetPassword, checkemail, checkemailOtp, checkeventId, checkphone, createAward, createEvent, exportToExcel, getAwards, getEventDashboard, getMyEvents, loginAdmin, searchEvent, sortbynewest, sortbyoldest, storeOTP, updateprofile, verifyOTP, newPasswordd, checkCurrentPass, updateAward, softDeleteAward, checkifDeleted, industry_types, updateEventDetails, deleteIndustryTypes, getEventById, updateEventSocial, addSubmissionId, publiclyVisible, generalSettings, overall_score, StartEndUpdate, liveEvent, archiveEvent, CreateScorecardCriteria, overallScorecardValue, CreateCriteriaSettingValues, criteriaSettings, checkIfDeletedCriteria, softDeleteCriteria, softDeleteSettingsValuesByCriteriaId, softDeleteSettingsByCriteriaId, additional_emails, updateAdditionalEmails, deleteAdditionalEmails, CreateJuryGroup, CreateFilteringCriteria, CreateFilteringCriteriaCategory, AssignJury, } from "../service/adminService.js"
+import {
+  adminRegister,
+  changeforgetPassword,
+  checkemail,
+  checkemailOtp,
+  checkeventId,
+  checkphone,
+  createAward,
+  createEvent,
+  exportToExcel,
+  getAwards,
+  getEventDashboard,
+  getMyEvents,
+  loginAdmin,
+  searchEvent,
+  sortbynewest,
+  sortbyoldest,
+  storeOTP,
+  updateprofile,
+  verifyOTP,
+  newPasswordd,
+  checkCurrentPass,
+  updateAward,
+  softDeleteAward,
+  checkifDeleted,
+  industry_types,
+  updateEventDetails,
+  deleteIndustryTypes,
+  getEventById,
+  updateEventSocial,
+  addSubmissionId,
+  publiclyVisible,
+  generalSettings,
+  overall_score,
+  StartEndUpdate,
+  liveEvent,
+  archiveEvent,
+  CreateScorecardCriteria,
+  overallScorecardValue,
+  CreateCriteriaSettingValues,
+  criteriaSettings,
+  additional_emails,
+  updateAdditionalEmails,
+  deleteAdditionalEmails,
+  CreateJuryGroup,
+  CreateFilteringCriteria,
+  CreateFilteringCriteriaCategory,
+  AssignJury,
+  getScorecard,
+  updateOverallScorecardValue,
+  updateScorecardCriteria,
+  updateCriteriaSettings,
+  updateCriteriaSettingValues,
+  UpdateFilteringCriteria,
+  UpdateJuryGroup,
+  UpdateFilteringCriteriaCategory,
+  softDeleteJuryGroup,
+  softDeleteFilteringCriteriaCategory,
+  softDeleteFilteringCriteria,
+  checkifDeletedGroupId,
+  getJuryGroup,
+  softDeleteGroupCriteria,
+  softDeleteGroupCriteriaCategory,
+  checkIfDeletedFilterId,
+  checkIfDeletedCriteriaId,
+  softDeleteCriteriaSettingValue,
+  softDeleteCriteriaSetting,
+  softDeleteCriteria,
+  getJuryName,
+} from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import otpGenerator from "otp-generator"
+import sendGmailAssign from "../mails/mail.js"
 
 
 export const usercreate = async (req, res) => {
@@ -706,8 +776,6 @@ export const awardUpdate = async (req, res) => {
       message: resposne.unauth,
     })
   }
-
-
   const {
     awardId,
     category_name,
@@ -788,10 +856,10 @@ export const deleteAward = async (req, res) => {
   }
   try {
     const message = await softDeleteAward(awardId)
-    if(message.affectedRows === 0){
+    if (message.affectedRows === 0) {
       return res.status(400).json({
-        status:resposne.successFalse,
-        message:resposne.deleteAwardError
+        status: resposne.successFalse,
+        message: resposne.deleteAwardError
       })
     }
     return res.status(200).json({
@@ -810,7 +878,7 @@ export const eventUpdate = async (req, res) => {
   const role = req.user.role
 
   if (role !== "admin") {
-    return res.status(403).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
     })
@@ -852,7 +920,7 @@ export const eventUpdate = async (req, res) => {
     const eventExists = await checkeventId(eventId)
 
     if (!eventExists) {
-      return res.status(404).json({
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.eventIdfail,
       })
@@ -1094,19 +1162,42 @@ export const visiblePublicly = async (req, res) => {
 }
 
 export const CreateGeneralSettings = async (req, res) => {
-  const role = req.user.role
+  const { role } = req.user
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: resposne.unauth,
+      message: resposne.unauth
     })
   }
-
   const {
+  eventId,
+  start_date,
+  end_date,
+  is_active,
+  is_one_at_a_time,
+  is_individual_category_assigned,
+  is_Completed_Submission,
+  is_jury_print_send_all,
+  is_scoring_dropdown,
+  is_comments_box_judging,
+  is_data_single_page,
+  is_total,
+  is_jury_others_score,
+  is_abstain,
+  overallScore,
+} = req.body
+const eventIdCheck = await checkeventId(eventId)
+
+if (!eventIdCheck) {
+  return res.status(400).json({
+    status: resposne.successFalse,
+    message: resposne.eventIdfail
+  })
+}
+try {
+  const eventResult = await generalSettings(
     eventId,
-    start_date,
-    end_date,
     is_active,
     is_one_at_a_time,
     is_individual_category_assigned,
@@ -1117,64 +1208,46 @@ export const CreateGeneralSettings = async (req, res) => {
     is_data_single_page,
     is_total,
     is_jury_others_score,
-    is_abstain,
-    overallScore,
-    event_id
-  } = req.body
+    is_abstain
+  )
 
-  try {
-    const eventResult = await generalSettings(
-      eventId,
-      is_active,
-      is_one_at_a_time,
-      is_individual_category_assigned,
-      is_Completed_Submission,
-      is_jury_print_send_all,
-      is_scoring_dropdown,
-      is_comments_box_judging,
-      is_data_single_page,
-      is_total,
-      is_jury_others_score,
-      is_abstain
-    )
-
-    const overallScorePromises = overallScore.map(score =>
-      overall_score(eventResult.id, score)
-    )
-
-    await Promise.all(overallScorePromises).catch(err => {
-      // console.error("Error inserting overall scores:", err)
-      throw new Error(resposne.overallScoreFail)
-    })
-
-    if (start_date || end_date) {
-      const updateResult = await StartEndUpdate(event_id, start_date, end_date)
-
-      if (updateResult.affectedRows > 0) {
-        return res.status(200).json({
-          status: resposne.successTrue,
-          message: resposne.generalSettingandUpdatedates,
-        })
-      } else {
-        return res.status(400).json({
-          status: resposne.successFalse,
-          message: resposne.noaffectedRowwithstartEnd,
-        })
-      }
-    } else {
-      return res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.generalSettingsUpdatewithoutDate,
+  if (overallScore && overallScore[0]) {
+    const result = await overall_score(eventResult.id, overallScore[0])
+    if (result.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.overallScoreFail,
       })
     }
-  } catch (error) {
-    // console.error("Error creating general settings:", error)
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message || resposne.generalsettingsError,
+  }
+
+  if (start_date || end_date) {
+    const updateResult = await startEndUpdate(eventId, start_date, end_date)
+    if (updateResult.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.noaffectedRowwithstartEnd,
+      })
+    }
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.generalSettingandUpdatedates,
     })
   }
+
+  return res.status(200).json({
+    status: resposne.successTrue,
+    message: resposne.generalSettingsUpdatewithoutDate,
+  })
+
+} catch (error) {
+  return res.status(400).json({
+    status: resposne.successFalse,
+    message: error.message || resposne.generalsettingsError,
+  })
 }
+}
+
 
 export const EventLive = async (req, res) => {
   const { role } = req.user
@@ -1316,6 +1389,356 @@ export const ScorecardCreate = async (req, res) => {
 }
 
 export const CriteriaSettingCreate = async (req, res) => {
+  const { role } = req.user
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const { criteriaId, eventId, criteria_type, Values } = req.body
+
+  try {
+    const result = await criteriaSettings(criteriaId, eventId, criteria_type)
+    if (!result || result.id === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.criteriawithoutcaptionvalue,
+      })
+    }
+
+    const value1Result = await CreateCriteriaSettingValues(criteriaId, eventId, Values[0].settingId, Values[0].caption, Values[0].value)
+    const value2Result = await CreateCriteriaSettingValues(criteriaId, eventId, Values[1].settingId, Values[1].caption, Values[1].value)
+
+    if (value1Result.affectedRows > 0 && value2Result.affectedRows > 0) {
+      return res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.criteriawithcaptionvalueSuccess,
+      })
+    } else {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.criteriaFail,
+      })
+    }
+
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+
+export const deleteScoreCard = async (req, res) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    });
+  }
+
+  const criteriaId = req.params.id;
+
+  try {
+    const isDeleted = await checkIfDeletedCriteriaId(criteriaId);
+
+    if (isDeleted) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.criteriaIdDeletedalready,
+      });
+    }
+
+    const deleteCriteriaSettingValue = await softDeleteCriteriaSettingValue(criteriaId);
+    if (deleteCriteriaSettingValue.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.errorSettingValueDelete,
+      });
+    }
+
+    const deleteCriteriaSetting = await softDeleteCriteriaSetting(criteriaId);
+    if (deleteCriteriaSetting.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.valueDeletedNotSetting,
+      });
+    }
+
+    const deleteCriteria = await softDeleteCriteria(criteriaId);
+    if (deleteCriteria.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.valueSettingDeletedNotCriteria,
+      });
+    }
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.criteriaDeleteSuccess,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    });
+  }
+};
+
+
+
+export const juryGroupCreate = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(403).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const { eventId, group_name, filtering_pattern, filtering_criterias, category } = req.body
+
+  const eventIdCheck = await checkeventId(eventId)
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail,
+    })
+  }
+
+  try {
+    const groupnameCreate = await CreateJuryGroup(eventId, group_name, filtering_pattern)
+
+    if (!groupnameCreate || !groupnameCreate.id) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nogroupCreate,
+      })
+    }
+
+    const filteringCriteriaPromises = filtering_criterias.map(item =>
+      CreateFilteringCriteria(eventId, groupnameCreate.id, item.category, item.isValue)
+    )
+
+    const filteringCriteriaResults = await Promise.all(filteringCriteriaPromises)
+
+    if (filteringCriteriaResults.some(result => !result || !result.id)) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.insertFilteringCriteriafail,
+      })
+    }
+
+    const insertedCategories = new Set()
+    const categoryPromises = []
+
+    for (const criteria of filteringCriteriaResults) {
+      for (const type of category) {
+        const uniqueKey = `${criteria.id}_${type}`
+
+        if (!insertedCategories.has(uniqueKey)) {
+          insertedCategories.add(uniqueKey)
+          categoryPromises.push(CreateFilteringCriteriaCategory(
+            eventId,
+            groupnameCreate.id,
+            criteria.id,
+            type
+          ))
+        }
+      }
+    }
+
+    const categoryValueResults = await Promise.all(categoryPromises)
+
+    if (categoryValueResults.some(result => !result || !result.id)) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.insertFilteringCriteriaCategoryFail,
+      })
+    }
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.juryGroupCreateSuccess,
+    })
+  } catch (error) {
+    // console.error('Creation error:', error)
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: `Error: ${error.message}`,
+    })
+  }
+}
+
+
+export const AssignJuryCreate = async (req, res) => {
+  const { role } = req.user
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+  const {
+    eventId,
+    group_name,
+    email,
+    first_name,
+    last_name,
+    is_readonly,
+    is_auto_signin,
+    is_assign_New,
+    is_assign_close,
+    is_assign_send
+  } = req.body
+
+  const eventIdCheck = await checkeventId(eventId)
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail,
+    })
+  }
+
+  try {
+
+    const result = await AssignJury(
+      eventId,
+      group_name,
+      email,
+      first_name,
+      last_name,
+      is_readonly,
+      is_auto_signin,
+      is_assign_New,
+      is_assign_close,
+    )
+
+    if (!result || !result.id) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.assignJuryCreateFail,
+      })
+    }
+    if (is_assign_send) {
+      const emailResult = await sendGmailAssign(first_name, last_name, email, group_name)
+      if (emailResult) {
+        return res.status(200).json({
+          status: resposne.successTrue,
+          message: "Jury Assigned and Email sent Successfully",
+          emailMessage: emailResult
+        })
+      }
+    }
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.assignJuryCreateSuccess,
+      id: result.id,
+    })
+
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+export const Scorecardget = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  try {
+    const result = await getScorecard()
+    if (result.length > 0) {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      })
+    } else {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      })
+    }
+  } catch (error) {
+    res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+export const ScorecardUpdate = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const { eventId, criteria, overall_scorecard } = req.body
+
+  const eventIdCheck = await checkeventId(eventId)
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail,
+    })
+  }
+
+  try {
+    const criteriaResults = []
+
+    for (const item of criteria) {
+      const updatedCriteriaResult = await updateScorecardCriteria(item.id, item.title, item.description)
+      criteriaResults.push(updatedCriteriaResult)
+    }
+
+    const overallScorecardPromises = criteriaResults.map((criteriaResult, index) => {
+      const criteriaId = criteriaResult.id
+      const score = overall_scorecard[index]
+      return updateOverallScorecardValue(criteriaId, eventId, score)
+    })
+
+    const overallResults = await Promise.all(overallScorecardPromises)
+
+    if (overallResults.some(result => result.id === undefined)) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.overallvaluesUpdateFail,
+      })
+    }
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.scorecardUpdateSuccess
+    })
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: ` Error: ${error.message}`,
+    })
+  }
+
+}
+
+export const CriteriaSettingUpdate = async (req, res) => {
   const role = req.user.role
 
   if (role !== "admin") {
@@ -1336,7 +1759,7 @@ export const CriteriaSettingCreate = async (req, res) => {
   }
 
   try {
-    const simpleresult = await criteriaSettings(criteriaId, eventId, criteria_type)
+    const simpleresult = await updateCriteriaSettings(criteriaId, eventId, criteria_type)
 
     if (!simpleresult || simpleresult.id === 0) {
       return res.status(400).json({
@@ -1348,13 +1771,17 @@ export const CriteriaSettingCreate = async (req, res) => {
     const criteriaWithCaptionResults = []
     const seenSettingIds = new Set()
 
-    if (Array.isArray(Values) && Values.length > 0) {
-      for (const item of Values) {
-        if (!seenSettingIds.has(item.settingId)) {
-          seenSettingIds.add(item.settingId)
-          const WithcaptionValueResult = await CreateCriteriaSettingValues(criteriaId, eventId, item.settingId, item.caption, item.value)
-          criteriaWithCaptionResults.push(WithcaptionValueResult)
-        }
+    for (const item of Values) {
+      if (!seenSettingIds.has(item.settingId)) {
+        seenSettingIds.add(item.settingId)
+
+        const WithcaptionValueResult = await updateCriteriaSettingValues(
+          criteriaId,
+          eventId,
+          item.settingId,
+          item.caption,
+          item.value)
+        criteriaWithCaptionResults.push(WithcaptionValueResult)
       }
     }
 
@@ -1363,7 +1790,6 @@ export const CriteriaSettingCreate = async (req, res) => {
       message: resposne.criteriawithcaptionvalueSuccess,
     })
   } catch (error) {
-    // console.error("Error creating criteria setting:", error)
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
@@ -1371,191 +1797,254 @@ export const CriteriaSettingCreate = async (req, res) => {
   }
 }
 
-
-export const deleteCriteria = async (req, res) => {
-  const { role } = req.user
-
-  if (role !== "admin") {
-    return res.status(403).json({
-      status: resposne.successFalse,
-      message: resposne.unauth,
-    })
-  }
-
-  const criteriaId = req.params.id
-
-  try {
-    const { isDeleted } = await checkIfDeletedCriteria(criteriaId)
-
-    if (isDeleted) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.criteriaAlreadyDeleted,
-      })
-    }
-
-    const [settingsValueDeleted, settingsDeleted, criteriaDeleted] = await Promise.all([
-      softDeleteSettingsValuesByCriteriaId(criteriaId),
-      softDeleteSettingsByCriteriaId(criteriaId),
-      softDeleteCriteria(criteriaId),
-    ])
-
-    let message = resposne.criteriaDeleted
-
-    if (settingsValueDeleted.affectedRows === 0) {
-      message += resposne.nodeletedSettingvalue
-    }
-
-    if (settingsDeleted.affectedRows === 0) {
-      message += resposne.nodeletedSetting
-    }
-
-    return res.status(200).json({
-      status: resposne.successTrue,
-      message: resposne.criteriaDeleteSuccess,
-    })
-  } catch (error) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
-
-export const juryGroupCreate = async (req, res) => {
-  const role = req.user.role;
+export const juryGroupUpdate = async (req, res) => {
+  const role = req.user.role
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    });
+    })
   }
 
-  const { eventId, group_name, filtering_pattern, filtering_criterias, category } = req.body;
+  const { groupId, eventId, group_name, filtering_pattern, filtering_criterias, category } = req.body
 
-  const eventIdCheck = await checkeventId(eventId);
+  const eventIdCheck = await checkeventId(eventId)
   if (!eventIdCheck) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.eventIdfail,
-    });
+    })
   }
 
   try {
-    const groupnameCreate = await CreateJuryGroup(eventId, group_name, filtering_pattern);
+    const groupUpdate = await UpdateJuryGroup(groupId, eventId, group_name, filtering_pattern)
 
-    if (!groupnameCreate || !groupnameCreate.id) {
+    if (!groupUpdate || !groupUpdate.id) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.nogroupCreate,
-      });
+        message: resposne.nogroupUpdate,
+      })
     }
 
     const filteringCriteriaPromises = filtering_criterias.map(item =>
-      CreateFilteringCriteria(eventId, groupnameCreate.id, item.category, item.isValue)
-    );
+      UpdateFilteringCriteria(item.id, eventId, groupUpdate.id, item.category, item.isValue)
+    )
 
-    const filteringCriteriaResults = await Promise.all(filteringCriteriaPromises);
+    const filteringCriteriaResults = await Promise.all(filteringCriteriaPromises)
 
     if (filteringCriteriaResults.some(result => !result || !result.id)) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.insertFilteringCriteriafail,
-      });
+      })
     }
 
-    const insertedCategories = new Set();
-    const categoryPromises = [];
+    const insertedCategories = new Set()
+    const categoryPromises = []
 
     for (const criteria of filteringCriteriaResults) {
       for (const type of category) {
-        const uniqueKey = `${criteria.id}_${type}`;
+        const uniqueKey = `${criteria.id}_${type}`
 
         if (!insertedCategories.has(uniqueKey)) {
-          insertedCategories.add(uniqueKey);
-          categoryPromises.push(CreateFilteringCriteriaCategory(eventId, groupnameCreate.id, criteria.id, type, criteria.isValue));
+          insertedCategories.add(uniqueKey)
+          categoryPromises.push(UpdateFilteringCriteriaCategory(
+            eventId,
+            groupUpdate.id,
+            criteria.id,
+            type
+          ))
         }
       }
     }
 
-    const categoryValueResults = await Promise.all(categoryPromises);
+    const categoryValueResults = await Promise.all(categoryPromises)
 
     if (categoryValueResults.some(result => !result || !result.id)) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.insertfilteringcriteriacategoryFail,
-      });
+        message: resposne.insertFilteringCriteriaCategoryFail,
+      })
     }
 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: resposne.juryGroupCreateSuccess,
-    });
+      message: resposne.juryGroupUpdateSuccess,
+    })
   } catch (error) {
-    console.error(error);
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    });
+    })
   }
 }
 
-export const AssignJuryCreate = async (req, res) => {
-  const { role } = req.user;
+export const deleteJuryGroup = async (req, res) => {
+  const { role } = req.user
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    });
+    })
   }
 
-  const {
-    eventId,
-    group_name,
-    email,
-    first_name,
-    last_name,
-    is_readonly,
-    is_auto_signin
-  } = req.body;
-
-  const eventIdCheck = await checkeventId(eventId);
-  if (!eventIdCheck) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.eventIdfail,
-    });
-  }
+  const groupId = req.params.id
 
   try {
-    const result = await AssignJury(
-      eventId,
-      group_name,
-      email,
-      first_name,
-      last_name,
-      is_readonly,
-      is_auto_signin
-    );
+    const { isDeleted } = await checkifDeletedGroupId(groupId)
 
-    if (!result || !result.id) {
+    if (isDeleted) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.assignJuryCreateFail,
-      });
-    } else {
-      return res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.assignJuryCreateSuccess,
-        id: result.id,
-      });
+        message: resposne.groupiddeletedalready,
+      })
     }
+
+    const deleteFilteringCriteriaCategory = await softDeleteFilteringCriteriaCategory(groupId)
+    if (deleteFilteringCriteriaCategory.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.errorfilterCriteria,
+      })
+    }
+    const deleteFilteringCriteria = await softDeleteFilteringCriteria(groupId)
+    if (deleteFilteringCriteria.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.filterCriteriaDeletedNotfilterCriteria,
+      })
+    }
+    const deletejuryGroup = await softDeleteJuryGroup(groupId)
+    if (deletejuryGroup.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.filterCriteriaFilterCriteriaDeletedNotgroup,
+      })
+    }
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.groupDeleteSuccess,
+    })
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    });
+    })
+  }
+}
+
+export const JuryGroupGet = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  try {
+    const result = await getJuryGroup()
+    if (result.length > 0) {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      })
+    } else {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      })
+    }
+  } catch (error) {
+    res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+export const deleteGroupCriteria = async (req, res) => {
+  const { role } = req.user
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const filterId = req.params.id
+
+  try {
+    const isDeleted = await checkIfDeletedFilterId(filterId)
+
+    if (isDeleted) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.filterIdDeletedAlready,
+      })
+    }
+
+    const deletegroupCriteriaCategory = await softDeleteGroupCriteriaCategory(filterId)
+    if (deletegroupCriteriaCategory.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.errorGroupCategoryDelete,
+      })
+    }
+    const deleteGroupCriteria = await softDeleteGroupCriteria(filterId)
+    if (deleteGroupCriteria.affectedRows === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.categoryDeletedNotJuryCriteria,
+      })
+    }
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.filterDeleteSuccess,
+    })
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+export const JuryNameget = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  try {
+
+    const result = await getJuryName()
+    if (result.length === 0) {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      })
+    } else {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      })
+    }
+  } catch (error) {
+    res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
   }
 }

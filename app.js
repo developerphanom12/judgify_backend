@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import cors from 'cors';
 import admin from './routes/adminRoutes.js'
+import admins from './routes/routes.js'
 import user from './routes/userRoutes.js'
 import { fileURLToPath } from "url";
 
@@ -24,6 +25,8 @@ const port = process.env.PORT || 6000;
 app.use('/api/admin', admin)
 
 app.use('/api/user',user)
+
+app.use('/api/admins',admins)
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

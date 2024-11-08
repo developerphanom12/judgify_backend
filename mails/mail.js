@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 import nodemailer from 'nodemailer';
 dotenv.config();
 
-async function sendGmail( first_name,last_name,email,company,mobile_number,country) {
+async function sendGmailAssign(first_name, last_name, email, group_name) {
     try {
         const user = process.env.EMAIL_USER;
         const pass = process.env.PASSWORD;
@@ -16,12 +16,12 @@ async function sendGmail( first_name,last_name,email,company,mobile_number,count
         });
 
         const htmlContent = `
-            <!DOCTYPE html>
+               <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>"User Registration  Email Verification"</title>
+                <title>User Assignment Notification</title>
                 <style>
                     body {
                         font-family: Arial, sans-serif;
@@ -47,13 +47,8 @@ async function sendGmail( first_name,last_name,email,company,mobile_number,count
             </head>
             <body>
                 <div class="container">
-                    <p class="message">Hello,</p>
-                    <p class="credentials"><strong>First Name:</strong> ${first_name}</p>
-                    <p class="credentials"><strong>Last Name:</strong> ${last_name}</p>
-                    <p class="credentials"><strong>Email:</strong> ${email}</p>
-                    <p class="credentials"><strong>Comapny:</strong> ${company}</p>
-                    <p class="credentials"><strong>Mobile Number:</strong> ${mobile_number}</p>
-                    <p class="credentials"><strong>Country:</strong> ${country}</p>
+                    <p class="message">Hello ${first_name} ${last_name},</p>
+                    <p class="message">You have been assigned as jury to the <strong>Group: ${group_name}</strong>.</p>
                 </div>
             </body>
             </html>
@@ -62,7 +57,7 @@ async function sendGmail( first_name,last_name,email,company,mobile_number,count
         const mailOptions = {
             from: user,
             to: email,
-            subject: "User Registration  Email Verification",
+            subject: "you are Assigned as jury ",
             html: htmlContent,
         };
 
@@ -74,4 +69,4 @@ async function sendGmail( first_name,last_name,email,company,mobile_number,count
     }
 }
 
-export default  sendGmail ;
+export default sendGmailAssign;

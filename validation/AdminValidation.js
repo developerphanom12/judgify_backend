@@ -829,6 +829,51 @@ export const ValidateScoreCardCriteria = (req, res, next) => {
   next()
 }
 
+const CriteriaSettingsCreate = Joi.object({
+
+  criteriaId: Joi.number().integer().required().messages({
+    "number.base": "Criteria ID must be a number",
+    "number.integer": "Criteria ID must be an integer",
+    "any.required": "Criteria ID is required"
+  }), 
+  eventId: Joi.number().integer().required().messages({
+    "number.base": "Event ID must be a number",
+    "number.integer": "Event ID must be an integer",
+    "any.required": "Event ID is required"
+  }),
+  criteria_type:Joi.string().optional().messages({
+    'string.base': 'Criteria Type must be a string.',
+  }),
+  Values: Joi.array().items(
+    Joi.object({
+      settingId: Joi.number().integer().required().messages({
+        "number.base": "Setting ID must be a number",
+        "number.integer": "Setting ID must be an integer",
+        "any.required": "Setting ID is required"
+      }),
+      caption: Joi.string().optional().messages({
+        "string.empty": "Caption is not allowed to be empty",
+      }),
+      value: Joi.string().optional().messages({
+        "string.empty": "Value is not allowed to be empty"
+      })
+    })
+  ).optional().messages({
+    "array.base": "Values must be an array",
+    "any.required": "Values is required",
+  }),
+})
+
+export const ValidateCriteriaSettingsCreate = (req, res, next) => {
+  const { error } = CriteriaSettingsCreate.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message
+    });
+  }
+  next();
+};
 
 const juryGroupSchema = Joi.object({
   eventId: Joi.number()
@@ -938,7 +983,19 @@ const assignJurySchema = Joi.object({
     'number.base': 'Auto signin status must be a number (0 or 1).',
     'any.only': 'Auto signin status must be 0 or 1.',
     'any.required': 'Auto signin status is required.'
+  }),  
+   is_assign_New: Joi.number().valid(0, 1).optional().messages({
+    'number.base': 'Assign new status must be a number (0 or 1).',
+    'any.only': 'Assign new  status must be 0 or 1.',
   }),
+  is_assign_close: Joi.number().valid(0, 1).optional().messages({
+    'number.base': 'Assign close  status must be a number (0 or 1).',
+    'any.only': 'Assign close status must be 0 or 1.',
+  }),
+  is_assign_send: Joi.number().valid(0, 1).optional().messages({
+    'number.base': 'Assign Send Mail status must be a number (0 or 1).',
+    'any.only': 'Assign Send Mail status must be 0 or 1.',
+  })
 });
 
 export const ValidateAssignJuryCreate = (req, res, next) => {
@@ -951,3 +1008,196 @@ export const ValidateAssignJuryCreate = (req, res, next) => {
   }
   next()
 }
+
+const scorecardCriteriaUpdate = Joi.object({
+  eventId: Joi.number().integer().required().messages({
+    "number.base": "Event ID must be a number",
+    "number.integer": "Event ID must be an integer",
+    "any.required": "Event ID is required"
+  }),
+  criteria: Joi.array().items(
+    Joi.object({
+      id: Joi.number().integer().required().messages({
+        "number.base": "Criteria ID must be a number",
+        "number.integer": "Criteria ID must be an integer",
+        "any.required": "Criteria ID is required"
+      }),
+      title: Joi.string().required().messages({
+        "string.empty": "Criteria Title is not allowed to be empty",
+        "any.required": "Criteria Title is required",
+      }),
+      description: Joi.string().required().messages({
+        "string.empty": "Description is not allowed to be empty",
+        "any.required": "Description is required",
+      })
+    })
+  ).required().messages({
+    "array.base": "Criteria must be an array",
+    "any.required": "Criteria is required",
+  }),
+  overall_scorecard: Joi.array().items(Joi.number().required().messages({
+    "number.base": "Overall ScoreCard Value must be a number",
+    "number.empty": "Overall ScoreCard Value cannot be empty",
+    "any.required": "Overall ScoreCard Value is required",
+  })).required().messages({
+    "array.base": "Overall ScoreCard Value must be an array",
+    "any.required": "Overall ScoreCard Value is required",
+  }),
+}).custom((value, helpers) => {
+  if (value.criteria.length !== value.overall_scorecard.length) {
+    return helpers.message("Criteria and Overall Scorecard values must have the same length.");
+  }
+  return value;
+});
+
+export const ValidateScoreCardUpdate = (req, res, next) => {
+  const { error } = scorecardCriteriaUpdate.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message
+    });
+  }
+  next();
+};
+
+const criteriaSettingUpdate = Joi.object({
+  criteriaId: Joi.string().required().messages({
+    'string.base': `"criteriaId" should be a type of 'text'`,
+    'string.empty': `"criteriaId" cannot be an empty field`,
+    'any.required': `"criteriaId" is a required field`
+  }),
+  eventId: Joi.string().required().messages({
+    'string.base': `"eventId" should be a type of 'text'`,
+    'string.empty': `"eventId" cannot be an empty field`,
+    'any.required': `"eventId" is a required field`
+  }),
+  criteria_type: Joi.string().valid('type1', 'type2').required().messages({
+    'string.base': `"criteria_type" should be a type of 'text'`,
+    'string.empty': `"criteria_type" cannot be an empty field`,
+    'any.required': `"criteria_type" is a required field`,
+    'any.only': `"criteria_type" must be one of [type1, type2]`
+  }),
+  Values: Joi.array().items(
+    Joi.object({
+      settingId: Joi.string().required().messages({
+        'string.base': `"settingId" should be a type of 'text'`,
+        'string.empty': `"settingId" cannot be an empty field`,
+        'any.required': `"settingId" is a required field`
+      }),
+      caption: Joi.string().required().messages({
+        'string.base': `"caption" should be a type of 'text'`,
+        'string.empty': `"caption" cannot be an empty field`,
+        'any.required': `"caption" is a required field`
+      }),
+      value: Joi.any().required().messages({
+        'any.required': `"value" is a required field`
+      })
+    })
+  ).required().messages({
+    'array.base': `"Values" should be an array`,
+    'array.empty': `"Values" cannot be an empty field`,
+    'any.required': `"Values" is a required field`
+  })
+});
+
+export const ValidateCriteriaSettingUpdate = (req, res, next) => {
+  const { error } = criteriaSettingUpdate.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message
+    });
+  }
+  next();
+};
+
+const juryGroupUpdate = Joi.object({
+  eventId: Joi.number()
+    .integer()
+    .required()
+    .messages({
+      'number.base': 'Event ID must be a number.',
+      'number.integer': 'Event ID must be an integer.',
+      'any.required': 'Event ID is required.',
+    }),
+
+  groupId: Joi.number() 
+    .integer()
+    .required()
+    .messages({
+      'number.base': 'Group ID must be a number.',
+      'number.integer': 'Group ID must be an integer.',
+      'any.required': 'Group ID is required.',
+    }),
+
+  group_name: Joi.string()
+    .max(255)
+    .required()
+    .messages({
+      'string.base': 'Group name must be a string.',
+      'string.max': 'Group name must be less than or equal to 255 characters.',
+      'any.required': 'Group name is required.',
+    }),
+
+  filtering_pattern: Joi.string()
+    .optional()
+    .messages({
+      'string.base': 'Filtering pattern must be a string.',
+    }),
+
+  filtering_criterias: Joi.array()
+    .items(
+      Joi.object({
+        id: Joi.number()
+          .integer()
+          .required()
+          .messages({
+            'number.base': 'Criteria ID must be a number.',
+            'number.integer': 'Criteria ID must be an integer.',
+            'any.required': 'Criteria ID is required.',
+          }),
+
+        category: Joi.string()
+          .max(255)
+          .required()
+          .messages({
+            'string.base': 'Category must be a string.',
+            'string.max': 'Category must be less than or equal to 255 characters.',
+            'any.required': 'Category is required.',
+          }),
+
+        isValue: Joi.string()
+          .optional()
+          .messages({
+            'string.base': 'Value must be a string.',
+          }),
+      })
+    )
+    .required()
+    .messages({
+      'array.base': 'Filtering criteria must be an array.',
+      'any.required': 'Filtering criteria is required.',
+    }),
+
+  category: Joi.array()
+    .items(Joi.string().max(255))
+    .required()
+    .messages({
+      'array.base': 'Categories must be an array.',
+      'string.base': 'Each category must be a string.',
+      'string.max': 'Category must be less than or equal to 255 characters.',
+      'any.required': 'Categories are required.',
+    }),
+});
+
+export const ValidateJuryGroupUpdate = (req, res, next) => {
+  const { error } = juryGroupUpdate.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message,
+    });
+  }
+  next();
+};
