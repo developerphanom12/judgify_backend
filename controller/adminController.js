@@ -71,6 +71,7 @@ import {
   getJuryName,
   getEmailwithOtp,
   checkOtpId,
+  getAdminProfile,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -2083,6 +2084,41 @@ export const GetEmailForVerify = async (req, res) => {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message ,
+    });
+  }
+};
+
+export const AdminProfileget = async (req, res) => {
+  const role = req.user.role;
+
+  if (role !== "admin") {
+    return res.status(403).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    });
+  }
+
+  const { adminId } = req.params;
+
+  try {
+    const result = await getAdminProfile(adminId);
+
+    if (result.admins.length === 0) {
+      return res.status(404).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      });
+    } else {
+      return res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result.admins,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: resposne.successFalse,
+      message: error.message,
     });
   }
 };

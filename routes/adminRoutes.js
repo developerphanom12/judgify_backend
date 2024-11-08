@@ -1,5 +1,5 @@
 import express from "express"
-import { AssignJuryCreate, awardCreate, Awardsget, awardUpdate, CreateGeneralSettings, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv, GetEmailForVerify, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, SearchEvent, sendOTP, SortBynewest, SortByOldest, SubmissionFormatCreate, updateforgetPassword, updateProfile, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
+import { AdminProfileget, AssignJuryCreate, awardCreate, Awardsget, awardUpdate, CreateGeneralSettings, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv, GetEmailForVerify, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, SearchEvent, sendOTP, SortBynewest, SortByOldest, SubmissionFormatCreate, updateforgetPassword, updateProfile, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
 import { validateAdmin, validateAdminLogin, validateotp, validateEventCreate, validateAwardCreate, validateNewPass, validateVerifyOtp, validateAdminUpdateProfile, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate } from '../validation/AdminValidation.js'
 import authenticate from '../middleware/authentication.js'
 import upload from '../middleware/multer.js'
@@ -85,5 +85,7 @@ router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 router.get('/getJuryName',authenticate,JuryNameget)
 
 router.get('/getEmail/:otpId', GetEmailForVerify);
+
+router.get('/getprofile/:adminId',authenticate,AdminProfileget)
 
 export default router  

@@ -2186,3 +2186,34 @@ export function getEmailwithOtp(otpId) {
     });
   });
 }
+
+export function getAdminProfile(adminId) {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT 
+        id,
+        first_name,
+        last_name,
+        email,
+        time_zone,
+        mobile_number,
+        company,
+        job_title,
+        profile_image
+      FROM admin
+      WHERE id = ? AND is_deleted = 0;
+    `;
+
+    db.query(query, [adminId], (err, results) => {
+      if (err) {
+        return reject(err);
+      }
+      if (results.length === 0) {
+        return reject(new Error('No Admin found for the given ID'));
+      }
+      resolve({
+        admins: results,
+      });
+    });
+  });
+}
