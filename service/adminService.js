@@ -1470,7 +1470,7 @@ export async function CreateCriteriaSettingValues(criteriaId, eventId, settingId
 export function checkIfDeletedCriteriaId(criteriaId) {
   return new Promise((resolve, reject) => {
     const query = `SELECT is_deleted = 1 FROM criteria WHERE id = ?`;
-    
+
     db.query(query, [criteriaId], (err, results) => {
       if (err) {
         return reject(new Error(resposne.deletionerrorCheck));
@@ -1498,7 +1498,7 @@ export async function softDeleteCriteriaSettingValue(criteriaId) {
       throw new Error(resposne.nocriteriaIdFound)
     }
 
-    return { message:resposne.settingvalueDeletedSuccess, affectedRows: result.affectedRows }
+    return { message: resposne.settingvalueDeletedSuccess, affectedRows: result.affectedRows }
   } catch (error) {
     // console.error(error)
     throw new Error(error.message)
@@ -1520,7 +1520,7 @@ export async function softDeleteCriteriaSetting(criteriaId) {
       throw new Error(resposne.nocriteriaIdFound)
     }
 
-    return { message:"resposne.settingvalueDeletedSuccess", affectedRows: result.affectedRows }
+    return { message: "resposne.settingvalueDeletedSuccess", affectedRows: result.affectedRows }
   } catch (error) {
     // console.error(error)
     throw new Error(error.message)
@@ -1542,7 +1542,7 @@ export async function softDeleteCriteria(criteriaId) {
       throw new Error(resposne.nocriteriaIdFound)
     }
 
-    return { message:"resposne.settingvalueDeletedSuccess", affectedRows: result.affectedRows }
+    return { message: "resposne.settingvalueDeletedSuccess", affectedRows: result.affectedRows }
   } catch (error) {
     // console.error(error)
     throw new Error(error.message)
@@ -2061,7 +2061,7 @@ export function getJuryGroup() {
 export function checkIfDeletedFilterId(filterId) {
   return new Promise((resolve, reject) => {
     const query = `SELECT is_deleted FROM filtering_criteria WHERE id = ?`;
-    
+
     db.query(query, [filterId], (err, results) => {
       if (err) {
         return reject(new Error(resposne.deletionerrorCheck));
@@ -2123,21 +2123,66 @@ export function getJuryName() {
 
   return new Promise((resolve, reject) => {
 
-      const query = `
+    const query = `
         SELECT 
           email
           FROM jury_assign 
           WHERE is_deleted = 0   
       `
 
-      db.query(query, (err, results) => {
-        if (err) {
-          return reject(err)
-        }
+    db.query(query, (err, results) => {
+      if (err) {
+        return reject(err)
+      }
 
-        resolve({
-          Judges: results.length ? results : [],
-        })
+      resolve({
+        Judges: results.length ? results : [],
       })
     })
-  }
+  })
+}
+
+
+export function checkOtpId(otpId) {
+  return new Promise((resolve, reject) => {
+    const query = `
+  SELECT email
+  FROM admin_otp
+  WHERE id = ?
+`;
+
+    db.query(query, [otpId], (err, results) => {
+      if (err) {
+        // console.error("Database query error in checkOtpId:", err);
+        return reject(new Error("Failed to check OTP ID in the database."));
+      }
+
+      resolve(true);
+    });
+  });
+}
+
+export function getEmailwithOtp(otpId) {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT email
+      FROM admin_otp
+      WHERE is_verified = 0 AND id = ?  
+    `;
+
+    db.query(query, [otpId], (err, results) => {
+      if (err) {
+        console.error(err);
+        return reject(err);
+      }
+
+      if (results.length === 0) {
+        return reject(new Error('No unverified email found for the given OTP ID'));
+      }
+
+      resolve({
+        email: results[0].email,
+      });
+    });
+  });
+}

@@ -189,6 +189,7 @@ const resposne = {
   valueDeletedNotSetting: "ScoreCard's Value Deleted But Error occured while Deleting Criteria Setting.",
   valueSettingDeletedNotCriteria: "ScoreCard's Setting and Value Deleted But Error occured while Deleting Criteria.",
   criteriaDeleteSuccess: "ScoreCard's Criteria Deleted SuccessFully",
+  otpIdfail: "Invalid Otp Id or not Found.",
 
 }
 export default resposne

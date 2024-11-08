@@ -69,6 +69,8 @@ import {
   softDeleteCriteriaSetting,
   softDeleteCriteria,
   getJuryName,
+  getEmailwithOtp,
+  checkOtpId,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -1495,7 +1497,7 @@ export const juryGroupCreate = async (req, res) => {
   const role = req.user.role
 
   if (role !== "admin") {
-    return res.status(403).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
     })
@@ -2048,3 +2050,39 @@ export const JuryNameget = async (req, res) => {
     })
   }
 }
+
+export const GetEmailForVerify = async (req, res) => {
+  const otpId = req.params.otpId;
+
+  try {
+    const otpIdCheck = await checkOtpId(otpId);
+
+    if (!otpIdCheck) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.otpIdfail,
+      });
+    }
+
+    const result = await getEmailwithOtp(otpId);
+
+    if (!result || !result.email) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      });
+    }
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.fetchSuccess,
+      data: result,
+    });
+
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message ,
+    });
+  }
+};
