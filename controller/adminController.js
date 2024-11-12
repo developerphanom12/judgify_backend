@@ -72,6 +72,7 @@ import {
   getEmailwithOtp,
   checkOtpId,
   getAdminProfile,
+  createCoupon,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -2122,3 +2123,65 @@ export const AdminProfileget = async (req, res) => {
     });
   }
 };
+
+export const CreateCoupon = async (req, res) => {
+  const { role } = req.user
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const {
+    eventId,
+    category,
+    coupon_name,
+    coupon_code,
+    percent_off,
+    coupon_amount,
+    start_date,
+    end_date  
+  } = req.body
+
+  const eventIdCheck = await checkeventId(eventId)
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail,
+    })
+  }
+
+  
+
+  try {
+    const result = await createCoupon(
+      eventId,
+      category,
+      coupon_name,
+      coupon_code,
+      percent_off,
+      coupon_amount,
+      start_date,
+      end_date  
+    )
+
+    if (result.length === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.couponCreatefail,
+      })
+    } else {
+      return res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.couponCreateSuccess,
+      })
+    }
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}

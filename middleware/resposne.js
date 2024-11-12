@@ -190,6 +190,9 @@ const resposne = {
   valueSettingDeletedNotCriteria: "ScoreCard's Setting and Value Deleted But Error occured while Deleting Criteria.",
   criteriaDeleteSuccess: "ScoreCard's Criteria Deleted SuccessFully",
   otpIdfail: "Invalid Otp Id or not Found.",
-
+  couponCreatefail:"Failed to create Coupon Code.",
+  couponCreateSuccess:"Coupon Code SuccessFully Created.",
+  couponFail:"CreateCoupon failed",
+  couponSuccess:"Create Coupon success"
 }
 export default resposne

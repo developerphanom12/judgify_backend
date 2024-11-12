@@ -519,10 +519,10 @@ const updateEventCreate = Joi.object({
     "any.required": "TimeZone is required"
   }),
   additional_email: Joi.array()
-  .items(Joi.string().email().messages({
-    'string.email': 'Additional Email must be a valid email address.',
-  }))
-  .optional(),
+    .items(Joi.string().email().messages({
+      'string.email': 'Additional Email must be a valid email address.',
+    }))
+    .optional(),
   is_endorsement: Joi.number().valid(0, 1).optional().messages({
     "number.base": "Endorsement value must be a number (0 or 1)",
     "any.only": "Endorsement value must be 0 or 1"
@@ -835,13 +835,13 @@ const CriteriaSettingsCreate = Joi.object({
     "number.base": "Criteria ID must be a number",
     "number.integer": "Criteria ID must be an integer",
     "any.required": "Criteria ID is required"
-  }), 
+  }),
   eventId: Joi.number().integer().required().messages({
     "number.base": "Event ID must be a number",
     "number.integer": "Event ID must be an integer",
     "any.required": "Event ID is required"
   }),
-  criteria_type:Joi.string().optional().messages({
+  criteria_type: Joi.string().optional().messages({
     'string.base': 'Criteria Type must be a string.',
   }),
   Values: Joi.array().items(
@@ -884,7 +884,7 @@ const juryGroupSchema = Joi.object({
       'number.integer': 'Event ID must be an integer.',
       'any.required': 'Event ID is required.',
     }),
-  
+
   group_name: Joi.string()
     .max(255)
     .required()
@@ -893,13 +893,13 @@ const juryGroupSchema = Joi.object({
       'string.max': 'Group name must be less than or equal to 255 characters.',
       'any.required': 'Group name is required.',
     }),
-  
+
   filtering_pattern: Joi.string()
     .optional()
     .messages({
       'string.base': 'Filtering pattern must be a string.',
     }),
-  
+
   filtering_criterias: Joi.array()
     .items(
       Joi.object({
@@ -911,7 +911,7 @@ const juryGroupSchema = Joi.object({
             'string.max': 'Category must be less than or equal to 255 characters.',
             'any.required': 'Category is required.',
           }),
-          isValue: Joi.string()
+        isValue: Joi.string()
           .optional()
           .messages({
             'string.base': 'Value must be a string.',
@@ -923,7 +923,7 @@ const juryGroupSchema = Joi.object({
       'array.base': 'Filtering criteria must be an array.',
       'any.required': 'Filtering criteria is required.',
     }),
-  
+
   category: Joi.array()
     .items(Joi.string().max(255))
     .required()
@@ -983,8 +983,8 @@ const assignJurySchema = Joi.object({
     'number.base': 'Auto signin status must be a number (0 or 1).',
     'any.only': 'Auto signin status must be 0 or 1.',
     'any.required': 'Auto signin status is required.'
-  }),  
-   is_assign_New: Joi.number().valid(0, 1).optional().messages({
+  }),
+  is_assign_New: Joi.number().valid(0, 1).optional().messages({
     'number.base': 'Assign new status must be a number (0 or 1).',
     'any.only': 'Assign new  status must be 0 or 1.',
   }),
@@ -1122,7 +1122,7 @@ const juryGroupUpdate = Joi.object({
       'any.required': 'Event ID is required.',
     }),
 
-  groupId: Joi.number() 
+  groupId: Joi.number()
     .integer()
     .required()
     .messages({
@@ -1193,6 +1193,56 @@ const juryGroupUpdate = Joi.object({
 
 export const ValidateJuryGroupUpdate = (req, res, next) => {
   const { error } = juryGroupUpdate.validate(req.body);
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message,
+    });
+  }
+  next();
+};
+
+const couponCreate = Joi.object({
+  eventId: Joi.number()
+    .integer()
+    .required()
+    .messages({
+      'number.base': 'Event ID must be a number.',
+      'number.integer': 'Event ID must be an integer.',
+      'any.required': 'Event ID is required.',
+    }),
+  category: Joi.string().optional().messages({
+    'any.string': 'Category status must be String.',
+  }),
+  coupon_name: Joi.string().required().messages({
+    'string.base': 'Coupon name must be a string.',
+    'any.required': 'Coupon name is required.',
+  }),
+  coupon_code: Joi.string().required().messages({
+    'string.base': 'Coupon Code must be a string.',
+    'any.required': 'Coupon Code is required.',
+  }),
+  percent_off: Joi.string().required().messages({
+    'string.base': 'Percent Off must be a string.',
+    'any.required': 'Percent Off is required.',
+  }),
+  coupon_amount: Joi.string().required().messages({
+    'string.base': 'Coupon amount must be a string.',
+    'any.required': 'Coupon amount is required.',
+  }),
+  start_date: Joi.string().required().messages({
+    'string.empty': "Start date cannot be empty",
+    'string.Date': "Start date must be a valid date",
+    'any.required': 'Start date is required.',
+  }),
+  end_date: Joi.string().required().messages({
+    'string.empty': "End date cannot be empty",
+    'string.Date': "End date must be a valid date",
+    'any.required': 'End date is required.',
+  }),
+})
+export const ValidateCouponCreate = (req, res, next) => {
+  const { error } = couponCreate.validate(req.body);
   if (error) {
     return res.status(400).json({
       status: resposne.successFalse,

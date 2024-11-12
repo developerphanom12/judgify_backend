@@ -79,3 +79,14 @@ export async function softDeleteSettingsValuesByCriteriaId(criteriaId) {
     const updateSql = `UPDATE criteria_settings_values SET is_deleted = 1 WHERE criteriaId = ?`
     return queryDb(updateSql, [criteriaId])
 }
+
+// ! for coupon code creation
+ 
+// var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+// var text = '';
+
+// for (var i = 0; i < 16; i++) {
+//     text += possible.charAt(Math.floor(Math.random() * possible.length));
+// }
+
+// console.log(text);  // Outputs a random 16-character string

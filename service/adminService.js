@@ -5,6 +5,7 @@ import dotenv from "dotenv"
 const saltRounds = 10
 import ExcelJS from 'exceljs'
 import resposne from "../middleware/resposne.js"
+import { resolve } from "path"
 dotenv.config()
 
 export function adminRegister(
@@ -901,7 +902,7 @@ export function checkifDeleted(awardId) {
 
 export async function getEventById(event_id) {
   const selectSql = `
-    SELECT 
+      SELECT 
         ed.id,
         ed.event_name, 
         ed.closing_date,
@@ -911,15 +912,15 @@ export async function getEventById(event_id) {
         ed.time_zone,
         ed.is_endorsement,
         ed.is_withdrawal,
-        ed.is_ediit_entry, 
+        ed.is_ediit_entry,  
         ed.limit_submission,
         ed.submission_limit,
-        GROUP_CONCAT(ae.additional_email) AS additional_emails,  -- Corrected typo
-        GROUP_CONCAT(it.industry_type) AS industry_types
+        GROUP_CONCAT(DISTINCT ae.additonal_email ORDER BY ae.additonal_email) AS additional_emails,  
+        GROUP_CONCAT(DISTINCT it.industry_type ORDER BY it.industry_type) AS industry_types
     FROM event_details ed
     LEFT JOIN industry_types it ON ed.id = it.eventId
     LEFT JOIN additional_emails ae ON ed.id = ae.eventId
-    WHERE ed.id = ?
+    WHERE ed.id = ?  
     GROUP BY ed.id
   `
 
@@ -2216,4 +2217,58 @@ export function getAdminProfile(adminId) {
       });
     });
   });
+}
+
+export async function createCoupon(
+  eventId,
+  category,
+  coupon_name,
+  coupon_code,
+  percent_off,
+  coupon_amount,
+  start_date,
+  end_date
+) {
+  const insertSql = `
+INSERT INTO coupons (
+    eventId,
+    category,
+    coupon_name,
+    coupon_code,
+    percent_off,
+    coupon_amount,
+    start_date,
+    end_date)VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+
+  `
+  const values = [
+    eventId,
+    category,
+    coupon_name,
+    coupon_code,
+    percent_off,
+    coupon_amount,
+    start_date,
+    end_date
+  ]
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(insertSql, values, (insertError, result) => {
+        if (insertError) {
+          return reject(new Error(`Database insert Error : ${insertError.message}`))
+        }
+        if (result.insertId) {
+          resolve(result.insertId)
+        } else {
+          reject(new Error(resposne.couponFail))
+        }
+      })
+    })
+    return {
+      id: result,
+      message: resposne.couponSuccess
+    }
+  } catch (error) {
+    throw new Error(`Database error: ${error.message}`)
+  }
 }
