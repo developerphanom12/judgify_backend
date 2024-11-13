@@ -145,7 +145,8 @@ export const loginseller = async (req, res) => {
       email,
       password
     )
-    if (loginResult === 0) {
+    console.log("loginresult",loginResult)
+    if (loginResult.error) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: loginResult.error,
@@ -353,7 +354,7 @@ export const updateforgetPassword = async (req, res) => {
 
 export const eventCreate = async (req, res) => {
   const role = req.user.role;
-
+const adminId = req.user.id 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
@@ -362,7 +363,6 @@ export const eventCreate = async (req, res) => {
   }
 
   const {
-    adminId,
     event_name,
     closing_date,
     closing_time,
@@ -426,7 +426,7 @@ export const eventCreate = async (req, res) => {
       banner,
       event_description
     );
-
+console.log("event",eventResult)
     const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry));
     const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email));
 
@@ -436,6 +436,7 @@ export const eventCreate = async (req, res) => {
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.createvent,
+      data: eventResult
     });
   } catch (error) {
     return res.status(400).json({
@@ -464,7 +465,7 @@ export const awardCreate = async (req, res) => {
     limit_submission,
     is_start_date,
     is_end_date,
-    is_endorsement,
+    is_endorsement,   
     start_date,
     end_date
   } = req.body

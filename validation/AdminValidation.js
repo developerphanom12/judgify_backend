@@ -199,10 +199,7 @@ export const validateupdateForgetPassword = (req, res, next) => {
 }
 
 const eventCreate = Joi.object({
-  adminId: Joi.string().required().messages({
-    "string.empty": "Admin Id is not allowed to be empty",
-    "any.required": "Admin Id is required",
-  }),
+
   event_name: Joi.string().required().messages({
     "string.empty": "Event Name is not allowed to be empty",
     "any.required": "Event Name is required",

@@ -18,7 +18,7 @@ router.post('/verifyOtp', validateVerifyOtp, verifyOTPHandler)
 
 router.post('/updateForgetPassword', validateupdateForgetPassword, updateforgetPassword)
 
-router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), validateEventCreate, eventCreate) //cut  
+router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate) //cut  
 
 router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)
 
@@ -26,7 +26,7 @@ router.get('/allAwrads', authenticate, Awardsget)
 
 router.get('/download', authenticate, exportCsv)
 
-router.get('/dashboardEvents', authenticate, dashboardEvents)  
+router.get('/dashboardEvents', authenticate, dashboardEvents)
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)
 
