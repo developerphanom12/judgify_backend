@@ -304,7 +304,20 @@ export async function changeforgetPassword({ email, newPassword }) {
   })
 }
 
+export function checkAdmin(adminId) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM admin WHERE id = ?";
+    db.query(query, [adminId], (err, results) => {
+      if (err) {
+        return reject(new Error("Database query error while checking admin"));
+      }
+      resolve(results.length > 0);
+    });
+  });
+}
+
 export async function createEvent(
+  adminId,
   event_name,
   closing_date,
   closing_time,
@@ -321,27 +334,28 @@ export async function createEvent(
   event_description
 ) {
   const insertSql = `
-   INSERT INTO event_details (
-    event_name, 
-    closing_date, 
-    closing_time, 
-    email, 
-    event_url, 
-    time_zone, 
-    is_endorsement, 
-    is_withdrawal, 
-    is_ediit_entry, 
-    limit_submission, 
-    event_logo, 
-    event_banner, 
-    event_description,
-    submission_limit
-) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-
-  `
+    INSERT INTO event_details (
+      adminId, 
+      event_name, 
+      closing_date, 
+      closing_time, 
+      email, 
+      event_url, 
+      time_zone, 
+      is_endorsement, 
+      is_withdrawal, 
+      is_ediit_entry, 
+      limit_submission, 
+      event_logo, 
+      event_banner, 
+      event_description,
+      submission_limit
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
 
   const values = [
+    adminId,
     event_name,
     closing_date,
     closing_time,
@@ -356,28 +370,30 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     event_banner,
     event_description,
     submission_limit
-  ]
+  ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(resposne.createventfail))
+          return reject(new Error(`Error inserting event: ${insertError.message}`));
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error(resposne.createventfail))
+          reject(new Error("Event creation failed: No insert ID"));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
-      message: resposne.createvent
-    }
+      message: resposne.createvent,
+      statusCode: 201
+    };
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    console.log("Error in createEvent:", error);
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
@@ -386,15 +402,17 @@ export function additional_emails(eventId, additional_email) {
     const query = `
       INSERT INTO additional_emails (eventId, additonal_email) 
       VALUES (?, ?)
-    `
-    db.query(query, [eventId, additional_email], (err, result) => {
+    `;
+    db.query(query, [eventId, additional_email], (err, result) => { 
       if (err) {
-        reject(new Error(resposne.additionalmailinsertFail))
-      } else {
-        resolve(result)
+        return reject(new Error(resposne.additionalmailinsertFail));
       }
-    })
-  })
+      resolve({
+        message: resposne.additionalmailinsertFail,
+        statusCode: 200
+      });
+    });
+  });
 }
 
 export function industry_types(eventId, industry_type) {
@@ -402,15 +420,17 @@ export function industry_types(eventId, industry_type) {
     const query = `
       INSERT INTO industry_types (eventId, industry_type) 
       VALUES (?, ?)
-    `
+    `;
     db.query(query, [eventId, industry_type], (err, result) => {
       if (err) {
-        reject(new Error(resposne.industrytypeInsertFail))
-      } else {
-        resolve(result)
+        return reject(new Error(err.message));
       }
-    })
-  })
+      resolve({
+        message: resposne.industrytypeInsertFail,
+        statusCode: 200
+      });
+    });
+  });
 }
 
 export function checkeventId(eventId) {
@@ -570,18 +590,19 @@ export function exportToExcel() {
   })
 }
 
-export function getEventDashboard() {
+export function getEventDashboard(id) {
   return new Promise((resolve, reject) => {
     const query = `
         SELECT 
+          id,
           event_name,
           event_logo,
           closing_date  
           FROM event_details
-          WHERE is_deleted = 0
+          WHERE adminId = ?
       `
-
-    db.query(query, (err, results) => {
+const value = [id]
+    db.query(query,value, (err, results) => {
       if (err) {
         return reject(err)
       }

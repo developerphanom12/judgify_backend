@@ -73,6 +73,7 @@ import {
   checkOtpId,
   getAdminProfile,
   createCoupon,
+  checkAdmin,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -80,6 +81,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import otpGenerator from "otp-generator"
 import sendGmailAssign from "../mails/mail.js"
+import sendGmailotp from "../mails/sendOtp.js"
 
 
 export const usercreate = async (req, res) => {
@@ -127,14 +129,15 @@ export const usercreate = async (req, res) => {
 }
 
 export const loginseller = async (req, res) => {
-  const { email, password } = req.body
+  const { email, password } = req.body  
   const emailExists = await checkemail(email)
-
-  if (!emailExists) {
-    return res.status(400).json({
-      status: resposne.successFalse,
+   
+  if (!emailExists) {  
+    return res.status(400).json({  
+      status: resposne.successFalse,  
       message: resposne.emailnotexist
     })
+      
   }
   try {
 
@@ -142,7 +145,6 @@ export const loginseller = async (req, res) => {
       email,
       password
     )
-
     if (loginResult === 0) {
       return res.status(400).json({
         status: resposne.successFalse,
@@ -225,42 +227,55 @@ export const updateProfile = async (req, res) => {
 }
 
 export const sendOTP = async (req, res) => {
-  const { email } = req.body
-  const emailExists = await checkemail(email)
+  const { email } = req.body;
+  const emailExists = await checkemail(email);
 
   if (!emailExists) {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: resposne.emailnotexist
-    })
+      message: resposne.emailnotexist,
+    });
   }
-  try {
 
+  try {
     const otp = otpGenerator.generate(6, {
       digits: true,
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
-      specialChars: false
-    })
-    const storedotp = await storeOTP(email, otp)
+      specialChars: false,
+    });
+
+
+    const storedotp = await storeOTP(email, otp);
     if (storedotp.length === 0) {
-      res.status(400).json({
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.otpstorefailed,
-      })
-    } else {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.otpsend,
-      })
+      });
+    }   
+     const sendotpemail = await sendGmailotp(email, otp);
+    
+    if (sendotpemail) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: "Error while sending OTP to email.",
+      });
     }
+
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.otpsend,
+    });
+
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
+
 
 export const verifyOTPHandler = async (req, res) => {
   const { email, otp } = req.body
@@ -337,16 +352,17 @@ export const updateforgetPassword = async (req, res) => {
 }
 
 export const eventCreate = async (req, res) => {
-  const role = req.user.role
+  const role = req.user.role;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
 
   const {
+    adminId,
     event_name,
     closing_date,
     closing_time,
@@ -355,37 +371,46 @@ export const eventCreate = async (req, res) => {
     time_zone,
     is_endorsement,
     is_withdrawal,
-    is_ediit_entry,
+    is_ediit_entry,  // Check if this is a typo, should be is_edit_entry
     limit_submission,
     submission_limit,
     event_description,
     industry_type,
     additional_email,
-  } = req.body
-
-  if (additional_email.includes(email)) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.diffrentemail,
-    })
-  }
-
-  if (limit_submission === 1 && (submission_limit === undefined || submission_limit < 1)) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.submisionlimit,
-    })
-  }
+  } = req.body;
 
   try {
-    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null
-    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null
+    const adminExists = await checkAdmin(adminId);
+    if (!adminExists) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: "No admin Id found or Admin does not exist",
+      });
+    }
+
+    if (Array.isArray(additional_email) && additional_email.includes(email)) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.diffrentemail, 
+      });
+    }
+
+    if (limit_submission === 1 && (submission_limit === undefined || submission_limit < 1)) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.submissionlimit,
+      });
+    }
+
+    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null;
+    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null;
 
     if (!logo && !banner) {
-      console.warn('Both logo and banner are not provided.')
+      console.warn('Both logo and banner are not provided.');
     }
 
     const eventResult = await createEvent(
+      adminId,
       event_name,
       closing_date,
       closing_time,
@@ -400,31 +425,26 @@ export const eventCreate = async (req, res) => {
       logo,
       banner,
       event_description
-    )
+    );
 
-    const industryPromises = industry_type.map(type =>
-      industry_types(eventResult.id, type)
-    )
+    const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry));
+    const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email));
 
-    await Promise.all(industryPromises)
-
-    const additionalEmailPromises = additional_email.map(email =>
-      additional_emails(eventResult.id, email)
-    )
-
-    await Promise.all(additionalEmailPromises)
+    // Await both the industry and additional email promises
+    await Promise.all([...industryPromises, ...additionalEmailPromises]);
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.createvent,
-    })
+    });
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
+
 
 export const awardCreate = async (req, res) => {
   const { role } = req.user
@@ -576,7 +596,8 @@ export const exportCsv = async (req, res) => {
 
 export const dashboardEvents = async (req, res) => {
   const role = req.user.role
-
+  const id = req.user.id
+console.log("id",id,role)
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
@@ -585,7 +606,7 @@ export const dashboardEvents = async (req, res) => {
   }
 
   try {
-    const result = await getEventDashboard()
+    const result = await getEventDashboard(id)
     if (result.length > 0) {
       res.status(200).json({
         status: resposne.successTrue,

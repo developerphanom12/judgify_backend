@@ -199,14 +199,17 @@ export const validateupdateForgetPassword = (req, res, next) => {
 }
 
 const eventCreate = Joi.object({
+  adminId: Joi.string().required().messages({
+    "string.empty": "Admin Id is not allowed to be empty",
+    "any.required": "Admin Id is required",
+  }),
   event_name: Joi.string().required().messages({
     "string.empty": "Event Name is not allowed to be empty",
     "any.required": "Event Name is required",
   }),
-  industry_type: Joi.array().items(Joi.string().messages({
-    "string.empty": "Industry Type is not allowed to be empty",
-  })).required().messages({
+  industry_type: Joi.array().items(Joi.string()).required().messages({
     "array.base": "Industry Type must be an array",
+    "array.includesType": "Each item in the Industry Type array must be a string",
     "any.required": "Industry Type is required",
   }),
   closing_date: Joi.string().required().messages({
@@ -233,11 +236,14 @@ const eventCreate = Joi.object({
     "string.empty": "Time Zone is not allowed to be empty",
     "any.required": "Time Zone is required",
   }),
-  additional_email: Joi.array()
-    .items(Joi.string().email().messages({
+  additional_email: Joi.alternatives().try(
+    Joi.string().email().messages({
       'string.email': 'Additional Email must be a valid email address.',
-    }))
-    .optional(),
+    }).optional(),
+    Joi.array().items(Joi.string().email().messages({
+      'string.email': 'Each email in the array must be a valid email address.',
+    })).optional()
+  ),
   is_endorsement: Joi.number().valid(0, 1).messages({
     'any.only': 'Value must be either 0 or 1',
     'any.required': 'Endorsement field is required',
@@ -254,26 +260,35 @@ const eventCreate = Joi.object({
     'any.only': 'Value must be either 0 or 1',
     'any.required': 'Limit Submission field is required',
   }),
-  submission_limit: Joi.number().messages({
-    'any.only': 'Value must be either 0 or 1',
-    'any.required': 'Submission Limit field is required',
+  submission_limit: Joi.number().when('limit_submission', {
+    is: 1,
+    then: Joi.number().min(1).required().messages({
+      'any.required': 'Submission Limit field is required when limit submission is 1',
+      'number.min': 'Submission Limit must be at least 1',
+    }),
+    otherwise: Joi.number().optional(),
   }),
   event_description: Joi.string().optional().messages({
     "string.empty": "Event Description cannot be empty",
   }),
-})
+});
 
 export const validateEventCreate = (req, res, next) => {
-  const { error } = eventCreate.validate(req.body, { abortEarly: false })
+  const { error } = eventCreate.validate(req.body, { abortEarly: false });
   if (error) {
-
+    const errorMessages = error.details.map(err => ({
+      field: err.path[0],
+      message: err.message,
+    }));
+    
     return res.status(400).json({
       status: resposne.successFalse,
-      message: error.message,
-    })
+      message: 'Validation failed',
+      errors: errorMessages,
+    });
   }
-  next()
-}
+  next();
+};
 
 const awardCreate = Joi.object({
   eventId: Joi.string().required().messages({

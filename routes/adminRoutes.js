@@ -26,7 +26,7 @@ router.get('/allAwrads', authenticate, Awardsget)
 
 router.get('/download', authenticate, exportCsv)
 
-router.get('/dashboardEvents', authenticate, dashboardEvents)
+router.get('/dashboardEvents', authenticate, dashboardEvents)  
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)
 
