@@ -354,15 +354,23 @@ export const updateforgetPassword = async (req, res) => {
 
 export const eventCreate = async (req, res) => {
   const role = req.user.role;
-const adminId = req.user.id 
+
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
     });
   }
-
+  const adminId = req.user.id;
+  const adminExists = await checkAdmin(adminId);
+  if (!adminExists) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: "No admin Id found or Admin does not exist",
+    });
+  }
   const {
+
     event_name,
     closing_date,
     closing_time,
@@ -371,7 +379,7 @@ const adminId = req.user.id
     time_zone,
     is_endorsement,
     is_withdrawal,
-    is_ediit_entry,  // Check if this is a typo, should be is_edit_entry
+    is_ediit_entry,
     limit_submission,
     submission_limit,
     event_description,
@@ -380,18 +388,12 @@ const adminId = req.user.id
   } = req.body;
 
   try {
-    const adminExists = await checkAdmin(adminId);
-    if (!adminExists) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: "No admin Id found or Admin does not exist",
-      });
-    }
+
 
     if (Array.isArray(additional_email) && additional_email.includes(email)) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.diffrentemail, 
+        message: resposne.diffrentemail,
       });
     }
 
@@ -426,7 +428,7 @@ const adminId = req.user.id
       banner,
       event_description
     );
-console.log("event",eventResult)
+
     const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry));
     const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email));
 
@@ -436,7 +438,6 @@ console.log("event",eventResult)
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.createvent,
-      data: eventResult
     });
   } catch (error) {
     return res.status(400).json({
@@ -526,36 +527,38 @@ export const awardCreate = async (req, res) => {
 }
 
 export const Awardsget = async (req, res) => {
-  const role = req.user.role
-
+  const role = req.user.role;
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
 
+  const eventId = req.params.eventId;
+
   try {
-    const result = await getAwards()
+    const result = await getAwards(eventId);
+    
     if (result.length > 0) {
-      res.status(200).json({
+      return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result,
-      })
+      });
     } else {
-      res.status(400).json({
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      })
+      });
     }
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

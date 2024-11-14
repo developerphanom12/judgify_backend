@@ -22,7 +22,7 @@ router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', m
 
 router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)
 
-router.get('/allAwrads', authenticate, Awardsget)
+router.get('/allAwards/:eventId', authenticate, Awardsget);
 
 router.get('/download', authenticate, exportCsv)
 

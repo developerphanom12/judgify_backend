@@ -510,28 +510,29 @@ export async function createAward(
   }
 }
 
-export function getAwards() {
+export function getAwards(eventId) {
   return new Promise((resolve, reject) => {
     const query = `
-        SELECT 
-          a.category_name,
-          a.category_prefix,
-          a.belongs_group,
-          a.limit_submission,
-          e.closing_date  
-          FROM awards_category a 
-          LEFT JOIN event_details e ON a.eventId = e.id
-          WHERE a.is_deleted = 0
-      `
+      SELECT 
+      e.id AS eventId,
+        e.closing_date ,
+        a.category_name,
+        a.category_prefix,
+        a.belongs_group,
+        a.limit_submission
+      FROM awards_category a 
+      LEFT JOIN event_details e ON a.eventId = e.id  
+      WHERE a.is_deleted = 0 AND a.eventId = ?
+    `;
 
-    db.query(query, (err, results) => {
+    db.query(query, [eventId], (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
 
-      resolve(results.length ? results : [])
-    })
-  })
+      resolve(results.length > 0 ? results : []);
+    });
+  });
 }
 
 export function exportToExcel() {
