@@ -129,15 +129,15 @@ export const usercreate = async (req, res) => {
 }
 
 export const loginseller = async (req, res) => {
-  const { email, password } = req.body  
+  const { email, password } = req.body
   const emailExists = await checkemail(email)
-   
-  if (!emailExists) {  
-    return res.status(400).json({  
-      status: resposne.successFalse,  
+
+  if (!emailExists) {
+    return res.status(400).json({
+      status: resposne.successFalse,
       message: resposne.emailnotexist
     })
-      
+
   }
   try {
 
@@ -145,7 +145,7 @@ export const loginseller = async (req, res) => {
       email,
       password
     )
-    console.log("loginresult",loginResult)
+    // console.log("loginresult", loginResult)
     if (loginResult.error) {
       return res.status(400).json({
         status: resposne.successFalse,
@@ -169,6 +169,7 @@ export const loginseller = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   const role = req.user.role
+  const userId = req.user.id
 
   if (role !== "admin") {
     return res.status(400).json({
@@ -176,7 +177,6 @@ export const updateProfile = async (req, res) => {
       message: resposne.unauth,
     })
   }
-  const userId = req.user.id
   const { first_name, last_name, email, company, mobile_number, time_zone, job_title } = req.body
   const profile_image = req.file
   if (!profile_image) {
@@ -228,14 +228,14 @@ export const updateProfile = async (req, res) => {
 }
 
 export const sendOTP = async (req, res) => {
-  const { email } = req.body;
-  const emailExists = await checkemail(email);
+  const { email } = req.body
+  const emailExists = await checkemail(email)
 
   if (!emailExists) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.emailnotexist,
-    });
+    })
   }
 
   try {
@@ -244,38 +244,38 @@ export const sendOTP = async (req, res) => {
       lowerCaseAlphabets: false,
       upperCaseAlphabets: false,
       specialChars: false,
-    });
+    })
 
 
-    const storedotp = await storeOTP(email, otp);
+    const storedotp = await storeOTP(email, otp)
     if (storedotp.length === 0) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.otpstorefailed,
-      });
-    }   
-     const sendotpemail = await sendGmailotp(email, otp);
-    
+      })
+    }
+    const sendotpemail = await sendGmailotp(email, otp)
+
     if (sendotpemail) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: "Error while sending OTP to email.",
-      });
+      })
     }
 
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.otpsend,
-    });
+    })
 
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 
 export const verifyOTPHandler = async (req, res) => {
@@ -353,21 +353,21 @@ export const updateforgetPassword = async (req, res) => {
 }
 
 export const eventCreate = async (req, res) => {
-  const role = req.user.role;
+  const role = req.user.role
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    });
+    })
   }
-  const adminId = req.user.id;
-  const adminExists = await checkAdmin(adminId);
+  const adminId = req.user.id
+  const adminExists = await checkAdmin(adminId)
   if (!adminExists) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: "No admin Id found or Admin does not exist",
-    });
+    })
   }
   const {
 
@@ -385,7 +385,7 @@ export const eventCreate = async (req, res) => {
     event_description,
     industry_type,
     additional_email,
-  } = req.body;
+  } = req.body
 
   try {
 
@@ -394,21 +394,21 @@ export const eventCreate = async (req, res) => {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.diffrentemail,
-      });
+      })
     }
 
     if (limit_submission === 1 && (submission_limit === undefined || submission_limit < 1)) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.submissionlimit,
-      });
+      })
     }
 
-    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null;
-    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null;
+    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null
+    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null
 
     if (!logo && !banner) {
-      console.warn('Both logo and banner are not provided.');
+      console.warn('Both logo and banner are not provided.')
     }
 
     const eventResult = await createEvent(
@@ -427,25 +427,25 @@ export const eventCreate = async (req, res) => {
       logo,
       banner,
       event_description
-    );
+    )
 
-    const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry));
-    const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email));
+    const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry))
+    const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email))
 
     // Await both the industry and additional email promises
-    await Promise.all([...industryPromises, ...additionalEmailPromises]);
+    await Promise.all([...industryPromises, ...additionalEmailPromises])
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.createvent,
-    });
+    })
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 
 export const awardCreate = async (req, res) => {
@@ -466,7 +466,7 @@ export const awardCreate = async (req, res) => {
     limit_submission,
     is_start_date,
     is_end_date,
-    is_endorsement,   
+    is_endorsement,
     start_date,
     end_date
   } = req.body
@@ -528,6 +528,7 @@ export const awardCreate = async (req, res) => {
 
 export const Awardsget = async (req, res) => {
   const role = req.user.role;
+
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
@@ -535,11 +536,13 @@ export const Awardsget = async (req, res) => {
     });
   }
 
-  const eventId = req.params.eventId;
+  const { eventId, search, sortOrder } = req.query;
+
+  const order = sortOrder === 'oldest' ? 'oldest' : 'newest';
 
   try {
-    const result = await getAwards(eventId);
-    
+    const result = await getAwards(eventId, search, order);
+
     if (result.length > 0) {
       return res.status(200).json({
         status: resposne.successTrue,
@@ -559,6 +562,7 @@ export const Awardsget = async (req, res) => {
     });
   }
 };
+
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -601,7 +605,7 @@ export const exportCsv = async (req, res) => {
 export const dashboardEvents = async (req, res) => {
   const role = req.user.role
   const id = req.user.id
-console.log("id",id,role)
+  // console.log("id", id, role)
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
@@ -631,6 +635,7 @@ console.log("id",id,role)
   }
 }
 
+
 export const NewPassword = async (req, res) => {
   const role = req.user.role
 
@@ -642,26 +647,24 @@ export const NewPassword = async (req, res) => {
   }
 
   const userId = req.user.id
-  const { currentPassword, newPassword, confirmPassword } = req.body
+  const { currentPassword, newPassword } = req.body
 
-  const passwordExists = await checkCurrentPass(currentPassword)
-  if (!passwordExists) {
+  const passwordExists = await checkCurrentPass(userId, currentPassword)
+  if (passwordExists.error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.checkCurrentPass,
     })
   }
 
-  if (newPassword !== confirmPassword) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.newPass,
-    })
-  }
-
   try {
     const result = await newPasswordd({ userId, currentPassword, newPassword })
-
+    if (result.error) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: "error in create new password"
+      })
+    }
     res.status(200).json({
       status: resposne.successTrue,
       message: result,
@@ -671,11 +674,13 @@ export const NewPassword = async (req, res) => {
       status: resposne.successFalse,
       message: error.message,
     })
+    // console.log("error", error.message)
   }
 }
 
 export const MyEventsget = async (req, res) => {
   const role = req.user.role
+  const id = req.user.id
 
   if (role !== "admin") {
     return res.status(400).json({
@@ -684,19 +689,18 @@ export const MyEventsget = async (req, res) => {
     })
   }
   const { skip, limit } = req.query
-
   try {
     const parsedSkip = parseInt(skip, 8) || 0
     const parsedLimit = parseInt(limit, 8) || 8
     const result = await getMyEvents(parsedSkip,
-      parsedLimit)
+      parsedLimit, id)
     if (result.length === 0) {
       res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
       })
     } else {
-      res.status(200).json({
+      res.status(200).json({ 
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result,
@@ -1200,33 +1204,9 @@ export const CreateGeneralSettings = async (req, res) => {
     })
   }
   const {
-  eventId,
-  start_date,
-  end_date,
-  is_active,
-  is_one_at_a_time,
-  is_individual_category_assigned,
-  is_Completed_Submission,
-  is_jury_print_send_all,
-  is_scoring_dropdown,
-  is_comments_box_judging,
-  is_data_single_page,
-  is_total,
-  is_jury_others_score,
-  is_abstain,
-  overallScore,
-} = req.body
-const eventIdCheck = await checkeventId(eventId)
-
-if (!eventIdCheck) {
-  return res.status(400).json({
-    status: resposne.successFalse,
-    message: resposne.eventIdfail
-  })
-}
-try {
-  const eventResult = await generalSettings(
     eventId,
+    start_date,
+    end_date,
     is_active,
     is_one_at_a_time,
     is_individual_category_assigned,
@@ -1237,44 +1217,68 @@ try {
     is_data_single_page,
     is_total,
     is_jury_others_score,
-    is_abstain
-  )
+    is_abstain,
+    overallScore,
+  } = req.body
+  const eventIdCheck = await checkeventId(eventId)
 
-  if (overallScore && overallScore[0]) {
-    const result = await overall_score(eventResult.id, overallScore[0])
-    if (result.affectedRows === 0) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.overallScoreFail,
-      })
-    }
-  }
-
-  if (start_date || end_date) {
-    const updateResult = await startEndUpdate(eventId, start_date, end_date)
-    if (updateResult.affectedRows === 0) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.noaffectedRowwithstartEnd,
-      })
-    }
-    return res.status(200).json({
-      status: resposne.successTrue,
-      message: resposne.generalSettingandUpdatedates,
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail
     })
   }
+  try {
+    const eventResult = await generalSettings(
+      eventId,
+      is_active,
+      is_one_at_a_time,
+      is_individual_category_assigned,
+      is_Completed_Submission,
+      is_jury_print_send_all,
+      is_scoring_dropdown,
+      is_comments_box_judging,
+      is_data_single_page,
+      is_total,
+      is_jury_others_score,
+      is_abstain
+    )
 
-  return res.status(200).json({
-    status: resposne.successTrue,
-    message: resposne.generalSettingsUpdatewithoutDate,
-  })
+    if (overallScore && overallScore[0]) {
+      const result = await overall_score(eventResult.id, overallScore[0])
+      if (result.affectedRows === 0) {
+        return res.status(400).json({
+          status: resposne.successFalse,
+          message: resposne.overallScoreFail,
+        })
+      }
+    }
 
-} catch (error) {
-  return res.status(400).json({
-    status: resposne.successFalse,
-    message: error.message || resposne.generalsettingsError,
-  })
-}
+    if (start_date || end_date) {
+      const updateResult = await startEndUpdate(eventId, start_date, end_date)
+      if (updateResult.affectedRows === 0) {
+        return res.status(400).json({
+          status: resposne.successFalse,
+          message: resposne.noaffectedRowwithstartEnd,
+        })
+      }
+      return res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.generalSettingandUpdatedates,
+      })
+    }
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.generalSettingsUpdatewithoutDate,
+    })
+
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message || resposne.generalsettingsError,
+    })
+  }
 }
 
 
@@ -1467,56 +1471,56 @@ export const deleteScoreCard = async (req, res) => {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    });
+    })
   }
 
-  const criteriaId = req.params.id;
+  const criteriaId = req.params.id
 
   try {
-    const isDeleted = await checkIfDeletedCriteriaId(criteriaId);
+    const isDeleted = await checkIfDeletedCriteriaId(criteriaId)
 
     if (isDeleted) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.criteriaIdDeletedalready,
-      });
+      })
     }
 
-    const deleteCriteriaSettingValue = await softDeleteCriteriaSettingValue(criteriaId);
+    const deleteCriteriaSettingValue = await softDeleteCriteriaSettingValue(criteriaId)
     if (deleteCriteriaSettingValue.affectedRows === 0) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.errorSettingValueDelete,
-      });
+      })
     }
 
-    const deleteCriteriaSetting = await softDeleteCriteriaSetting(criteriaId);
+    const deleteCriteriaSetting = await softDeleteCriteriaSetting(criteriaId)
     if (deleteCriteriaSetting.affectedRows === 0) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.valueDeletedNotSetting,
-      });
+      })
     }
 
-    const deleteCriteria = await softDeleteCriteria(criteriaId);
+    const deleteCriteria = await softDeleteCriteria(criteriaId)
     if (deleteCriteria.affectedRows === 0) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.valueSettingDeletedNotCriteria,
-      });
+      })
     }
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.criteriaDeleteSuccess,
-    });
+    })
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 
 
@@ -2079,75 +2083,75 @@ export const JuryNameget = async (req, res) => {
 }
 
 export const GetEmailForVerify = async (req, res) => {
-  const otpId = req.params.otpId;
+  const otpId = req.params.otpId
 
   try {
-    const otpIdCheck = await checkOtpId(otpId);
+    const otpIdCheck = await checkOtpId(otpId)
 
     if (!otpIdCheck) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.otpIdfail,
-      });
+      })
     }
 
-    const result = await getEmailwithOtp(otpId);
+    const result = await getEmailwithOtp(otpId)
 
     if (!result || !result.email) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      });
+      })
     }
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.fetchSuccess,
       data: result,
-    });
+    })
 
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: error.message ,
-    });
+      message: error.message,
+    })
   }
-};
+}
 
 export const AdminProfileget = async (req, res) => {
-  const role = req.user.role;
-
+  const role = req.user.role
+  const adminId = req.user.id
+  // console.log("id",adminId)
   if (role !== "admin") {
-    return res.status(403).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    });
+    })
   }
 
-  const { adminId } = req.params;
 
   try {
-    const result = await getAdminProfile(adminId);
+    const result = await getAdminProfile(adminId)
 
     if (result.admins.length === 0) {
-      return res.status(404).json({
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      });
+      })
     } else {
       return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result.admins,
-      });
+      })
     }
   } catch (error) {
-    return res.status(500).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const CreateCoupon = async (req, res) => {
   const { role } = req.user
@@ -2167,7 +2171,7 @@ export const CreateCoupon = async (req, res) => {
     percent_off,
     coupon_amount,
     start_date,
-    end_date  
+    end_date
   } = req.body
 
   const eventIdCheck = await checkeventId(eventId)
@@ -2178,7 +2182,7 @@ export const CreateCoupon = async (req, res) => {
     })
   }
 
-  
+
 
   try {
     const result = await createCoupon(
@@ -2189,7 +2193,7 @@ export const CreateCoupon = async (req, res) => {
       percent_off,
       coupon_amount,
       start_date,
-      end_date  
+      end_date
     )
 
     if (result.length === 0) {

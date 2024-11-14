@@ -1,8 +1,9 @@
 import express from "express"
-
+import authenticate from "../middleware/authentication.js"
+import { eventCreate } from "../controller/controller.js"
 
 const router = express.Router()
 
-router.post('/generalSettings',)
+router.post('/createEvent', authenticate, eventCreate)
 
-export default router  
+export default router   

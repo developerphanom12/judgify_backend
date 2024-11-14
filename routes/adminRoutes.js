@@ -6,31 +6,31 @@ import upload from '../middleware/multer.js'
 
 const router = express.Router()
 
-router.post('/register', validateAdmin, usercreate)
+router.post('/register', validateAdmin, usercreate)//* --------  DONE
 
-router.post('/login', validateAdminLogin, loginseller)
+router.post('/login', validateAdminLogin, loginseller)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'), validateAdminUpdateProfile, updateProfile)
+router.post('/profileUpdate', authenticate, upload.single('profile_image'), validateAdminUpdateProfile, updateProfile)//!-----------   to be done today 
 
-router.post('/send_otp', validateotp, sendOTP)
+router.post('/send_otp', validateotp, sendOTP)//* --------  DONE
 
-router.post('/verifyOtp', validateVerifyOtp, verifyOTPHandler)
+router.post('/verifyOtp', validateVerifyOtp, verifyOTPHandler)//* --------  DONE
 
-router.post('/updateForgetPassword', validateupdateForgetPassword, updateforgetPassword)
+router.post('/updateForgetPassword', validateupdateForgetPassword, updateforgetPassword)//* --------  DONE
 
-router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate) //cut  
+router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate) //cut  //!----changes will be apllied here by Avneet sir 
 
-router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)
+router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)//* --------  DONE
 
-router.get('/allAwards/:eventId', authenticate, Awardsget);
+router.get('/allAwards', authenticate, Awardsget)//&--------- getting implemeted to the frontend
 
-router.get('/download', authenticate, exportCsv)
+router.get('/download', authenticate, exportCsv)//!-----------  to be done today
 
-router.get('/dashboardEvents', authenticate, dashboardEvents)
+router.get('/dashboardEvents', authenticate, dashboardEvents)//* --------  DONE
 
-router.post('/newPassword', authenticate, validateNewPass, NewPassword)
+router.post('/newPassword', authenticate, validateNewPass, NewPassword)//!-----------  to be done today
 
-router.get('/MyEvents', authenticate, MyEventsget)
+router.get('/MyEvents', authenticate, MyEventsget)//* --------  DONE
 
 router.get('/OldAward', authenticate, SortByOldest)
 
@@ -84,11 +84,11 @@ router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 
 router.get('/getJuryName', authenticate, JuryNameget)
 
-router.get('/getEmail/:otpId', GetEmailForVerify);
+router.get('/getEmail/:otpId', GetEmailForVerify)
 
-router.get('/getprofile/:adminId', authenticate, AdminProfileget)
+router.get('/getprofile', authenticate, AdminProfileget)//!-----------  to be done today
 
 router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)
 
 
-export default router  
+export default router   

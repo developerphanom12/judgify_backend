@@ -364,9 +364,7 @@ const newPassword = Joi.object({
       "string.max": " New Password must not exceed 16 characters.",
       "any.required": "New password is required",
     }),
-  confirmPassword: Joi.string().required().messages({
-    'any.required': 'Confirm password is required.',
-  }),
+
 })
 
 export const validateNewPass = (req, res, next) => {

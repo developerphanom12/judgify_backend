@@ -306,14 +306,14 @@ export async function changeforgetPassword({ email, newPassword }) {
 
 export function checkAdmin(adminId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE id = ?";
+    const query = "SELECT * FROM admin WHERE id = ?"
     db.query(query, [adminId], (err, results) => {
       if (err) {
-        return reject(new Error("Database query error while checking admin"));
+        return reject(new Error("Database query error while checking admin"))
       }
-      resolve(results.length > 0);
-    });
-  });
+      resolve(results.length > 0)
+    })
+  })
 }
 
 export async function createEvent(
@@ -352,7 +352,7 @@ export async function createEvent(
       submission_limit
     ) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+  `
 
   const values = [
     adminId,
@@ -370,30 +370,30 @@ export async function createEvent(
     event_banner,
     event_description,
     submission_limit
-  ];
+  ]
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Error inserting event: ${insertError.message}`));
+          return reject(new Error(`Error inserting event: ${insertError.message}`))
         }
         if (result.insertId) {
-          resolve(result.insertId);
+          resolve(result.insertId)
         } else {
-          reject(new Error("Event creation failed: No insert ID"));
+          reject(new Error("Event creation failed: No insert ID"))
         }
-      });
-    });
+      })
+    })
 
     return {
       id: result,
       message: resposne.createvent,
       statusCode: 201
-    };
+    }
   } catch (error) {
-    console.log("Error in createEvent:", error);
-    throw new Error(`Database error: ${error.message}`);
+    // console.log("Error in createEvent:", error)
+    throw new Error(`Database error: ${error.message}`)
   }
 }
 
@@ -402,17 +402,17 @@ export function additional_emails(eventId, additional_email) {
     const query = `
       INSERT INTO additional_emails (eventId, additonal_email) 
       VALUES (?, ?)
-    `;
-    db.query(query, [eventId, additional_email], (err, result) => { 
+    `
+    db.query(query, [eventId, additional_email], (err, result) => {
       if (err) {
-        return reject(new Error(resposne.additionalmailinsertFail));
+        return reject(new Error(resposne.additionalmailinsertFail))
       }
       resolve({
         message: resposne.additionalmailinsertFail,
         statusCode: 200
-      });
-    });
-  });
+      })
+    })
+  })
 }
 
 export function industry_types(eventId, industry_type) {
@@ -420,17 +420,17 @@ export function industry_types(eventId, industry_type) {
     const query = `
       INSERT INTO industry_types (eventId, industry_type) 
       VALUES (?, ?)
-    `;
+    `
     db.query(query, [eventId, industry_type], (err, result) => {
       if (err) {
-        return reject(new Error(err.message));
+        return reject(new Error(err.message))
       }
       resolve({
         message: resposne.industrytypeInsertFail,
         statusCode: 200
-      });
-    });
-  });
+      })
+    })
+  })
 }
 
 export function checkeventId(eventId) {
@@ -510,22 +510,34 @@ export async function createAward(
   }
 }
 
-export function getAwards(eventId) {
+export function getAwards(eventId, search, sortOrder = 'newest') {
   return new Promise((resolve, reject) => {
-    const query = `
+    let query = `
       SELECT 
-      e.id AS eventId,
-        e.closing_date ,
+        a.id AS awardId,
         a.category_name,
         a.category_prefix,
         a.belongs_group,
-        a.limit_submission
+        a.limit_submission,
+        e.id AS eventId,
+        e.closing_date 
       FROM awards_category a 
       LEFT JOIN event_details e ON a.eventId = e.id  
-      WHERE a.is_deleted = 0 AND a.eventId = ?
-    `;
+      WHERE a.is_deleted = 0 AND a.eventId = ?`;
 
-    db.query(query, [eventId], (err, results) => {
+    if (search) {
+      query += ` AND a.category_name LIKE ?`;
+    }
+
+    if (sortOrder === 'newest') {
+      query += ` ORDER BY a.created_at DESC`; // Newest first
+    } else if (sortOrder === 'oldest') {
+      query += ` ORDER BY a.created_at ASC`; // Oldest first
+    }
+
+    const searchTerm = search ? `%${search}%` : null;
+
+    db.query(query, [eventId, searchTerm].filter(Boolean), (err, results) => {
       if (err) {
         return reject(err);
       }
@@ -534,6 +546,7 @@ export function getAwards(eventId) {
     });
   });
 }
+
 
 export function exportToExcel() {
   const workbook = new ExcelJS.Workbook()
@@ -602,8 +615,8 @@ export function getEventDashboard(id) {
           FROM event_details
           WHERE adminId = ?
       `
-const value = [id]
-    db.query(query,value, (err, results) => {
+    const value = [id]
+    db.query(query, value, (err, results) => {
       if (err) {
         return reject(err)
       }
@@ -613,15 +626,11 @@ const value = [id]
   })
 }
 
-export async function checkCurrentPass(user, password) {
+export async function checkCurrentPass(userId, password) {
   return new Promise((resolve, reject) => {
     const query = "SELECT * FROM admin WHERE id = ?"
 
-    if (!password) {
-      return resolve({ error: resposne.missingPass })
-    }
-
-    db.query(query, [user.id], async (err, results) => {
+    db.query(query, [userId], async (err, results) => {
       if (err) {
         return reject(err)
       }
@@ -684,24 +693,25 @@ export async function newPasswordd({ userId, currentPassword, newPassword }) {
   }
 }
 
-export function getMyEvents(skip, limit) {
-
+export function getMyEvents(skip, limit, id) {
   return new Promise((resolve, reject) => {
     const countQuery = `
       SELECT COUNT(*) as totalCount
       FROM event_details
       WHERE is_deleted = 0
-    `
+      ${id ? 'AND adminId = ?' : ''}
+    `;
 
-    db.query(countQuery, (countErr, countResults) => {
+    db.query(countQuery, id ? [id] : [], (countErr, countResults) => {
       if (countErr) {
-        return reject(countErr)
+        return reject(countErr);
       }
 
-      const totalCount = countResults[0].totalCount
+      const totalCount = countResults[0].totalCount;
 
       const query = `
         SELECT 
+          id,
           event_name,
           closing_date,
           event_logo,
@@ -709,24 +719,26 @@ export function getMyEvents(skip, limit) {
           is_withdrawn,
           is_completed,
           is_draft
-          FROM event_details 
-          WHERE is_deleted = 0
-          LIMIT ? OFFSET ?
-      `
+        FROM event_details 
+        WHERE is_deleted = 0
+        ${id ? 'AND adminId = ?' : ''}
+        LIMIT ? OFFSET ?
+      `;
 
-      db.query(query, [parseInt(limit), parseInt(skip)], (err, results) => {
+      db.query(query, id ? [id, parseInt(limit), parseInt(skip)] : [parseInt(limit), parseInt(skip)], (err, results) => {
         if (err) {
-          return reject(err)
+          return reject(err);
         }
 
         resolve({
           totalCount: totalCount,
           events: results.length ? results : [],
-        })
-      })
-    })
-  })
+        });
+      });
+    });
+  });
 }
+
 
 export function sortbyoldest() {
   return new Promise((resolve, reject) => {
@@ -1492,18 +1504,18 @@ export async function CreateCriteriaSettingValues(criteriaId, eventId, settingId
 
 export function checkIfDeletedCriteriaId(criteriaId) {
   return new Promise((resolve, reject) => {
-    const query = `SELECT is_deleted = 1 FROM criteria WHERE id = ?`;
+    const query = `SELECT is_deleted = 1 FROM criteria WHERE id = ?`
 
     db.query(query, [criteriaId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck));
+        return reject(new Error(resposne.deletionerrorCheck))
       }
       if (results.length === 0) {
-        return reject(new Error(resposne.criteriaIdnotFound));
+        return reject(new Error(resposne.criteriaIdnotFound))
       }
-      resolve(results[0].is_deleted === 1);
-    });
-  });
+      resolve(results[0].is_deleted === 1)
+    })
+  })
 }
 
 export async function softDeleteCriteriaSettingValue(criteriaId) {
@@ -2057,44 +2069,44 @@ export function getJuryGroup() {
       WHERE e.is_deleted = 0
       AND jg.group_name IS NOT NULL
       AND jg.filtering_pattern IS NOT NULL
-    `;
+    `
 
     db.query(query, (error, results) => {
       if (error) {
-        return reject(error);
+        return reject(error)
       }
 
       const filteredResults = results.map(result => ({
         GroupId: result.juryGroupId,
         Group_Name: result.group_name,
         Formula: result.filtering_pattern
-      }));
+      }))
 
       const nonNullResults = filteredResults.filter(result =>
         result.GroupId !== null &&
         result.Group_Name !== null &&
         result.Formula !== null
-      );
+      )
 
-      resolve(nonNullResults);
-    });
-  });
+      resolve(nonNullResults)
+    })
+  })
 }
 
 export function checkIfDeletedFilterId(filterId) {
   return new Promise((resolve, reject) => {
-    const query = `SELECT is_deleted FROM filtering_criteria WHERE id = ?`;
+    const query = `SELECT is_deleted FROM filtering_criteria WHERE id = ?`
 
     db.query(query, [filterId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck));
+        return reject(new Error(resposne.deletionerrorCheck))
       }
       if (results.length === 0) {
-        return reject(new Error(resposne.filterIdnotFound));
+        return reject(new Error(resposne.filterIdnotFound))
       }
-      resolve(results[0].is_deleted === 1);
-    });
-  });
+      resolve(results[0].is_deleted === 1)
+    })
+  })
 }
 
 
@@ -2172,17 +2184,17 @@ export function checkOtpId(otpId) {
   SELECT email
   FROM admin_otp
   WHERE id = ?
-`;
+`
 
     db.query(query, [otpId], (err, results) => {
       if (err) {
-        // console.error("Database query error in checkOtpId:", err);
-        return reject(new Error("Failed to check OTP ID in the database."));
+        // console.error("Database query error in checkOtpId:", err)
+        return reject(new Error("Failed to check OTP ID in the database."))
       }
 
-      resolve(true);
-    });
-  });
+      resolve(true)
+    })
+  })
 }
 
 export function getEmailwithOtp(otpId) {
@@ -2191,23 +2203,23 @@ export function getEmailwithOtp(otpId) {
       SELECT email
       FROM admin_otp
       WHERE is_verified = 0 AND id = ?  
-    `;
+    `
 
     db.query(query, [otpId], (err, results) => {
       if (err) {
-        console.error(err);
-        return reject(err);
+        // console.error(err)
+        return reject(err)
       }
 
       if (results.length === 0) {
-        return reject(new Error('No unverified email found for the given OTP ID'));
+        return reject(new Error('No unverified email found for the given OTP ID'))
       }
 
       resolve({
         email: results[0].email,
-      });
-    });
-  });
+      })
+    })
+  })
 }
 
 export function getAdminProfile(adminId) {
@@ -2224,21 +2236,21 @@ export function getAdminProfile(adminId) {
         job_title,
         profile_image
       FROM admin
-      WHERE id = ? AND is_deleted = 0;
-    `;
+      WHERE id = ? AND is_deleted = 0
+    `
 
     db.query(query, [adminId], (err, results) => {
       if (err) {
-        return reject(err);
+        return reject(err)
       }
       if (results.length === 0) {
-        return reject(new Error('No Admin found for the given ID'));
+        return reject(new Error('No Admin found for the given ID'))
       }
       resolve({
         admins: results,
-      });
-    });
-  });
+      })
+    })
+  })
 }
 
 export async function createCoupon(
