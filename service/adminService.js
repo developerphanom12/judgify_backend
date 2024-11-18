@@ -306,14 +306,14 @@ export async function changeforgetPassword({ email, newPassword }) {
 
 export function checkAdmin(adminId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE id = ?"
+    const query = "SELECT * FROM admin WHERE id = ?";
     db.query(query, [adminId], (err, results) => {
       if (err) {
-        return reject(new Error("Database query error while checking admin"))
+        return reject(new Error("Database query error while checking admin"));
       }
-      resolve(results.length > 0)
-    })
-  })
+      resolve(results.length > 0);
+    });
+  });
 }
 
 export async function createEvent(
@@ -352,7 +352,7 @@ export async function createEvent(
       submission_limit
     ) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `
+  `;
 
   const values = [
     adminId,
@@ -370,30 +370,30 @@ export async function createEvent(
     event_banner,
     event_description,
     submission_limit
-  ]
+  ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Error inserting event: ${insertError.message}`))
+          return reject(new Error(`Error inserting event: ${insertError.message}`));
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error("Event creation failed: No insert ID"))
+          reject(new Error("Event creation failed: No insert ID"));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
       message: resposne.createvent,
       statusCode: 201
-    }
+    };
   } catch (error) {
-    // console.log("Error in createEvent:", error)
-    throw new Error(`Database error: ${error.message}`)
+    console.log("Error in createEvent:", error);
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
@@ -402,17 +402,17 @@ export function additional_emails(eventId, additional_email) {
     const query = `
       INSERT INTO additional_emails (eventId, additonal_email) 
       VALUES (?, ?)
-    `
-    db.query(query, [eventId, additional_email], (err, result) => {
+    `;
+    db.query(query, [eventId, additional_email], (err, result) => { 
       if (err) {
-        return reject(new Error(resposne.additionalmailinsertFail))
+        return reject(new Error(resposne.additionalmailinsertFail));
       }
       resolve({
         message: resposne.additionalmailinsertFail,
         statusCode: 200
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
 export function industry_types(eventId, industry_type) {
@@ -420,18 +420,19 @@ export function industry_types(eventId, industry_type) {
     const query = `
       INSERT INTO industry_types (eventId, industry_type) 
       VALUES (?, ?)
-    `
+    `;
     db.query(query, [eventId, industry_type], (err, result) => {
       if (err) {
-        return reject(new Error(err.message))
+        return reject(new Error(err.message));
       }
       resolve({
         message: resposne.industrytypeInsertFail,
         statusCode: 200
-      })
-    })
-  })
+      });
+    });
+  });
 }
+
 
 export function checkeventId(eventId) {
   return new Promise((resolve, reject) => {
@@ -547,61 +548,72 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
   });
 }
 
-
-export function exportToExcel() {
-  const workbook = new ExcelJS.Workbook()
-  const worksheet = workbook.addWorksheet("Award Category")
+export function exportToExcel(eventId) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Award Category");
 
   worksheet.columns = [
-    { header: "id.", key: "id", width: 5 },
-    { header: "EventId.", key: "eventId", width: 12 },
+    { header: "ID", key: "id", width: 5 },
+    { header: "Event ID", key: "eventId", width: 12 },
     { header: "Category Name", key: "category_name", width: 20 },
     { header: "Category Prefix", key: "category_prefix", width: 15 },
     { header: "Belongs Group", key: "belongs_group", width: 35 },
     { header: "Limit Submission", key: "limit_submission", width: 35 },
-    { header: "Closing Date", key: "closing_date", width: 25 }
-  ]
+    { header: "Closing Date", key: "closing_date", width: 25 },
+  ];
 
   return new Promise((resolve, reject) => {
-    db.connect()
-    db.query(`SELECT 
-      a.id,
-      a.eventId,
-      a.category_name,
-      a.category_prefix,
-      a.belongs_group,
-      a.limit_submission,
-      e.closing_date  
+    const sql = `
+      SELECT 
+        a.id,
+        a.eventId,
+        a.category_name,
+        a.category_prefix,
+        a.belongs_group,
+        a.limit_submission,
+        e.closing_date  
       FROM awards_category a 
       LEFT JOIN event_details e ON a.eventId = e.id
-      WHERE a.is_deleted =0
-      `
-      , (err, results) => {
-        if (err) {
-          return reject(err)
-        }
+      WHERE e.id = ?
+      `;
 
-        results.forEach((user) => {
-          worksheet.addRow({
-            id: user.id,
-            eventId: user.eventId,
-            category_name: user.category_name,
-            category_prefix: user.category_prefix,
-            belongs_group: user.belongs_group,
-            limit_submission: user.limit_submission,
-            closing_date: user.closing_date
-          })
+    // console.log('Executing SQL:', sql);
+    // console.log('With parameters:', [eventId]);
+
+    db.query(sql, [eventId], (err, results) => {
+      if (err) {
+        // console.error('SQL Error:', err);
+        return reject(err);
+      }
+    
+      // console.log('Query Results:', results);
+    
+      results.forEach((row) => {
+        worksheet.addRow({
+          id: row.id,
+          eventId: row.eventId,
+          category_name: row.category_name,
+          category_prefix: row.category_prefix,
+          belongs_group: row.belongs_group,
+          limit_submission: row.limit_submission,
+          closing_date: row.closing_date,
+        });
+      });
+
+      worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
+        cell.font = { bold: true };
+      });
+
+      workbook.xlsx.writeBuffer()
+        .then((buffer) => {
+          resolve(buffer); 
         })
-
-        worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
-          cell.font = { bold: true }
-        })
-
-        workbook.xlsx.writeBuffer()
-          .then(buffer => resolve(buffer))
-          .catch(err => reject(err))
-      })
-  })
+        .catch((writeErr) => {
+          console.error('Error writing workbook:', writeErr);
+          reject(writeErr); 
+        });
+    });
+  });
 }
 
 export function getEventDashboard(id) {
@@ -693,7 +705,7 @@ export async function newPasswordd({ userId, currentPassword, newPassword }) {
   }
 }
 
-export function getMyEvents(skip, limit, id) {
+export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
   return new Promise((resolve, reject) => {
     const countQuery = `
       SELECT COUNT(*) as totalCount
@@ -701,7 +713,7 @@ export function getMyEvents(skip, limit, id) {
       WHERE is_deleted = 0
       ${id ? 'AND adminId = ?' : ''}
     `;
-
+    
     db.query(countQuery, id ? [id] : [], (countErr, countResults) => {
       if (countErr) {
         return reject(countErr);
@@ -709,23 +721,34 @@ export function getMyEvents(skip, limit, id) {
 
       const totalCount = countResults[0].totalCount;
 
-      const query = `
+      let query = `
         SELECT 
-          id,
-          event_name,
-          closing_date,
-          event_logo,
-          is_pending,
-          is_withdrawn,
-          is_completed,
-          is_draft
-        FROM event_details 
-        WHERE is_deleted = 0
-        ${id ? 'AND adminId = ?' : ''}
-        LIMIT ? OFFSET ?
+          a.id,
+          a.event_name,
+          a.closing_date,
+          a.event_logo,
+          a.is_pending,
+          a.is_withdrawn,
+          a.is_completed,
+          a.is_draft
+        FROM event_details a
+        WHERE a.is_deleted = 0
+        ${id ? 'AND a.adminId = ?' : ''}
       `;
 
-      db.query(query, id ? [id, parseInt(limit), parseInt(skip)] : [parseInt(limit), parseInt(skip)], (err, results) => {
+      if (sortOrder === 'newest') {
+        query += ` ORDER BY a.created_at DESC`;
+      } else if (sortOrder === 'oldest') {
+        query += ` ORDER BY a.created_at ASC`;
+      }
+
+      query += ` LIMIT ? OFFSET ?`;
+
+      const queryParams = id 
+        ? [id, parseInt(limit), parseInt(skip)] 
+        : [parseInt(limit), parseInt(skip)];
+
+      db.query(query, queryParams, (err, results) => {
         if (err) {
           return reject(err);
         }
@@ -949,6 +972,8 @@ export async function getEventById(event_id) {
         ed.is_ediit_entry,  
         ed.limit_submission,
         ed.submission_limit,
+        ed.event_logo,
+        ed.event_banner,
         GROUP_CONCAT(DISTINCT ae.additonal_email ORDER BY ae.additonal_email) AS additional_emails,  
         GROUP_CONCAT(DISTINCT it.industry_type ORDER BY it.industry_type) AS industry_types
     FROM event_details ed

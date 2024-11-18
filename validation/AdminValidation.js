@@ -1261,3 +1261,35 @@ export const ValidateCouponCreate = (req, res, next) => {
   }
   next();
 };
+
+const filterCategory = Joi.object({
+  eventId: Joi.string().required().messages({
+    "string.empty": "Event Id is not allowed to be empty",
+    "any.required": "Event Id is required",
+    "any.empty": "Event Id is not allowed to be empty",
+
+  }),
+  sortOrder: Joi.valid('oldest','newest').optional().messages({
+    "string.empty": "Sort Order is not allowed to be empty",
+    "any.empty": "Sort Order is not allowed to be empty",
+
+  }),
+  search: Joi.string().optional().messages({
+    "string.empty": "search is not allowed to be empty",
+    "any.empty": "search is not allowed to be empty",
+  }),
+})
+
+
+export const validatefilterCategory = (req, res, next) => {
+  const { error } = filterCategory.validate(req.query)
+
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message
+    })
+  }
+
+  next()
+}

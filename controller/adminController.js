@@ -179,12 +179,7 @@ export const updateProfile = async (req, res) => {
   }
   const { first_name, last_name, email, company, mobile_number, time_zone, job_title } = req.body
   const profile_image = req.file
-  if (!profile_image) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.imageRequire,
-    })
-  }
+
   try {
 
 
@@ -574,33 +569,38 @@ if (!fs.existsSync(directoryPath)) {
 }
 
 export const exportCsv = async (req, res) => {
-  const role = req.user.role
+  const role = req.user.role;
+  const eventId = req.query.eventId; 
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
+
   try {
-    const sheet = await exportToExcel()
+    // console.log('Event ID:', eventId);
 
-    const filePath = path.join(directoryPath, 'Awards Category.xlsx')
+    const sheet = await exportToExcel(eventId);
 
-    fs.writeFileSync(filePath, sheet)
+    const filePath = path.join(directoryPath, 'Awards Category.xlsx');
+
+    fs.writeFileSync(filePath, sheet);
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.downloadSuccess,
-      path: filePath
-    })
+      path: filePath,
+    });
   } catch (error) {
+    // console.error('Error exporting to Excel:', error);
     res.status(400).send({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
 
 export const dashboardEvents = async (req, res) => {
   const role = req.user.role
@@ -645,7 +645,7 @@ export const NewPassword = async (req, res) => {
       message: resposne.unauth,
     })
   }
-
+  const search = req.query
   const userId = req.user.id
   const { currentPassword, newPassword } = req.body
 
@@ -658,7 +658,7 @@ export const NewPassword = async (req, res) => {
   }
 
   try {
-    const result = await newPasswordd({ userId, currentPassword, newPassword })
+    const result = await newPasswordd({ userId, search, currentPassword, newPassword })
     if (result.error) {
       return res.status(400).json({
         status: resposne.successFalse,
@@ -679,40 +679,50 @@ export const NewPassword = async (req, res) => {
 }
 
 export const MyEventsget = async (req, res) => {
-  const role = req.user.role
-  const id = req.user.id
+  const role = req.user.role;
+  const id = req.user.id;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
-  const { skip, limit } = req.query
+
+  const { skip, limit, order } = req.query;
+
+  // console.log("Query Params:", req.query); 
+
+  const sortOrder = order === 'oldest' ? 'oldest' : 'newest';
+
+  // console.log("Sort order:", sortOrder);  
+
   try {
-    const parsedSkip = parseInt(skip, 8) || 0
-    const parsedLimit = parseInt(limit, 8) || 8
-    const result = await getMyEvents(parsedSkip,
-      parsedLimit, id)
-    if (result.length === 0) {
-      res.status(400).json({
+    const parsedSkip = parseInt(skip, 10) || 0;
+    const parsedLimit = parseInt(limit, 10) || 8;
+
+    const result = await getMyEvents(parsedSkip, parsedLimit, id, sortOrder);
+
+    if (result.totalCount === 0) {
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      })
+      });
     } else {
-      res.status(200).json({ 
+      return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result,
-      })
+      });
     }
   } catch (error) {
-    res.status(400).json({
+    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
+
 
 export const SortByOldest = async (req, res) => {
   const role = req.user.role
