@@ -569,34 +569,38 @@ if (!fs.existsSync(directoryPath)) {
 }
 
 export const exportCsv = async (req, res) => {
-  const role = req.user.role
+  const role = req.user.role;
+  const eventId = req.query.eventId; 
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
+
   try {
-    const sheet = await exportToExcel()
+    // console.log('Event ID:', eventId);
 
-    const filePath = path.join(directoryPath, 'Awards Category.xlsx')
+    const sheet = await exportToExcel(eventId);
 
-    fs.writeFileSync(filePath, sheet)
+    const filePath = path.join(directoryPath, 'Awards Category.xlsx');
+
+    fs.writeFileSync(filePath, sheet);
 
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.downloadSuccess,
-      path: filePath
-    })
+      path: filePath,
+    });
   } catch (error) {
+    // console.error('Error exporting to Excel:', error);
     res.status(400).send({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
-
+};
 export const dashboardEvents = async (req, res) => {
   const role = req.user.role
   const id = req.user.id
