@@ -949,6 +949,9 @@ export async function getEventById(event_id) {
         ed.is_ediit_entry,  
         ed.limit_submission,
         ed.submission_limit,
+        ed.event_logo,
+        ed.event_banner,
+        ed.event_description,
         GROUP_CONCAT(DISTINCT ae.additonal_email ORDER BY ae.additonal_email) AS additional_emails,  
         GROUP_CONCAT(DISTINCT it.industry_type ORDER BY it.industry_type) AS industry_types
     FROM event_details ed
