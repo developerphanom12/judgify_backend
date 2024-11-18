@@ -382,40 +382,40 @@ export const validateNewPass = (req, res, next) => {
 
 const UpdateadminProfile = Joi.object({
 
-  first_name: Joi.string().required().messages({
+  first_name: Joi.string().optional().messages({
     "string.empty": "First name is not allowed to be empty",
     "any.required": "First name is required",
   }),
-  last_name: Joi.string().required().messages({
+  last_name: Joi.string().optional().messages({
     "string.empty": "Last name is not allowed to be empty",
     "any.required": "Last name is required",
   }),
   email: Joi.string()
     .email()
-    .required()
+    .optional()
     .messages({
       'string.empty': 'Email is not allowed to be empty.',
       'string.email': 'Email must be a valid email address.',
       'any.required': 'Email is required.'
     }),
-  time_zone: Joi.string().required().messages({
+  time_zone: Joi.string().optional().messages({
     "string.empty": "Time Zone is not allowed to be empty",
     "any.required": "Time Zone is required",
   }),
   mobile_number: Joi.string()
     .length(10)
     .pattern(/[6-9]{1}[0-9]{9}/)
-    .required()
+    .optional()
     .messages({
       'string.length': 'Mobile number must be exactly 10 digits long',
       'string.pattern.base': 'Mobile number must start with digits 6-9 and contain only digits',
       'any.required': 'Mobile number is required',
     }),
-  company: Joi.string().required().messages({
+  company: Joi.string().optional().messages({
     "string.empty": "Company is not allowed to be empty",
     "any.required": "Company is required",
   }),
-  job_title: Joi.string().required().messages({
+  job_title: Joi.string().optional().messages({
     "string.empty": "Job Title is not allowed to be empty",
     "any.required": "Job Title  is required",
   }),
@@ -1261,3 +1261,40 @@ export const ValidateCouponCreate = (req, res, next) => {
   }
   next();
 };
+
+
+
+
+const filterCategory = Joi.object({
+  eventId: Joi.string().required().messages({
+    "string.empty": "Event Id is not allowed to be empty",
+    "any.required": "Event Id is required",
+    "any.empty": "Event Id is not allowed to be empty",
+
+  }),
+  sortOrder: Joi.valid('oldest','newest').optional().messages({
+    "string.empty": "Event Id is not allowed to be empty",
+    "any.empty": "Event Id is not allowed to be empty",
+
+  }),
+  search: Joi.string().optional().messages({
+    "string.empty": "search is not allowed to be empty",
+    "any.empty": "search is not allowed to be empty",
+
+  }),
+ 
+ 
+})
+
+export const validatefilterCategory = (req, res, next) => {
+  const { error } = filterCategory.validate(req.query)
+
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message
+    })
+  }
+
+  next()
+}

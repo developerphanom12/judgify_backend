@@ -179,12 +179,7 @@ export const updateProfile = async (req, res) => {
   }
   const { first_name, last_name, email, company, mobile_number, time_zone, job_title } = req.body
   const profile_image = req.file
-  if (!profile_image) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.imageRequire,
-    })
-  }
+
   try {
 
 
