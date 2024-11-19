@@ -1,4 +1,5 @@
-import { additional_emailssss, checkAdmin, checkeventEmail, createEvent, industry_types, } from "../service/service.js"
+import { checkeventId } from "../service/adminService.js";
+import { additional_emailssss, checkAdmin, checkeventEmail, createEvent,  industry_types, updateAdditionalEmails, updateEventDetails, updateIndustryTypes, } from "../service/service.js"
 
 const resposne = {
   successFalse: false,
@@ -117,3 +118,113 @@ export const eventCreate = async (req, res) => {
     });
   }
 };
+
+export const eventUpdate = async (req, res) => {
+  try {
+    // Authentication and role check
+    const { role } = req.user;
+
+    if (role !== "admin") {
+      return res.status(403).json({
+        status: false,
+        message: "Unauthorized access"
+      });
+    }
+
+    // Extract event ID and update fields
+    const { 
+      eventId, 
+      additional_email, 
+      industry_type,
+      ...eventUpdates 
+    } = req.body;
+
+
+    // Verify event exists
+    const eventExists = await checkeventId(eventId);
+    if (!eventExists) {
+      return res.status(404).json({
+        status: false,
+        message: "Event not found"
+      });
+    }
+
+    // Prepare update promises
+    const updatePromises = [];
+
+    // Event Details Update
+    if (Object.keys(eventUpdates).length > 0) {
+      updatePromises.push(
+        updateEventDetails(eventId, eventUpdates)
+          .catch(error => {
+            console.error('Event Details Update Error:', error);
+            throw new Error(`Event details update failed: ${error.message}`);
+          })
+      );
+    }
+
+    // Additional Emails Update
+    if (additional_email && additional_email.length > 0) {
+      updatePromises.push(
+        updateAdditionalEmails(eventId, additional_email)
+          .catch(error => {
+            console.error('Additional Emails Update Error:', error);
+            throw new Error(`Additional emails update failed: ${error.message}`);
+          })
+      );
+    }
+
+    // Industry Types Update
+    if (industry_type && industry_type.length > 0) {
+      updatePromises.push(
+        updateIndustryTypes(eventId, industry_type)
+          .catch(error => {
+            console.error('Industry Types Update Error:', error);
+            throw new Error(`Industry types update failed: ${error.message}`);
+          })
+      );
+    }
+
+    // Check if any updates are provided
+    if (updatePromises.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: "No updates provided"
+      });
+    }
+
+    // Execute all updates
+    await Promise.all(updatePromises);
+
+    // Prepare update confirmation
+    const updatedFields = [
+      ...Object.keys(eventUpdates),
+      ...(additional_email ? ['additional_email'] : []),
+      ...(industry_type ? ['industry_type'] : [])
+    ];
+
+    // Success response
+    return res.status(200).json({
+      status: true,
+      message: "Event updated successfully",
+      data: {
+        eventId,
+        updatedFields
+      }
+    });
+
+  } catch (error) {
+    // Log unexpected errors
+    console.error('Event Update Unexpected Error:', error);
+
+    // Differentiated error response
+    return res.status(500).json({
+      status: false,
+      message: "Failed to update event",
+      ...(process.env.NODE_ENV === 'development' && { 
+        debugInfo: error.message 
+      })
+    });
+  }
+};
+

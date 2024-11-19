@@ -959,63 +959,90 @@ export function checkifDeleted(awardId) {
 
 export async function getEventById(event_id) {
   const selectSql = `
-      SELECT 
-        ed.id,
-        ed.event_name, 
-        ed.closing_date,
-        ed.closing_time,
-        ed.email,
-        ed.event_url,
-        ed.time_zone,
-        ed.is_endorsement,
-        ed.is_withdrawal,
-        ed.is_ediit_entry,  
-        ed.limit_submission,
-        ed.submission_limit,
-        ed.event_logo,
-        ed.event_banner,
-        GROUP_CONCAT(DISTINCT ae.additonal_email ORDER BY ae.additonal_email) AS additional_emails,  
-        GROUP_CONCAT(DISTINCT it.industry_type ORDER BY it.industry_type) AS industry_types
+    SELECT 
+      ed.id,
+      ed.event_name, 
+      ed.closing_date,
+      ed.closing_time,
+      ed.email,
+      ed.event_url,
+      ed.time_zone,
+      ed.is_endorsement,
+      ed.is_withdrawal,
+      ed.is_ediit_entry,  
+      ed.limit_submission,
+      ed.submission_limit,
+      ed.event_logo,
+      ed.event_banner,
+      ae.id AS email_id,
+      ae.additonal_email AS email_address,  
+      it.id AS industry_type_id,
+      it.industry_type AS industry_type_name
     FROM event_details ed
     LEFT JOIN industry_types it ON ed.id = it.eventId
     LEFT JOIN additional_emails ae ON ed.id = ae.eventId
     WHERE ed.id = ?  
-    GROUP BY ed.id
-  `
+  `;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(selectSql, [event_id], (fetchError, results) => {
         if (fetchError) {
-          return reject(fetchError)
+          return reject(fetchError);
         }
+
         if (results.length > 0) {
-          const event = results[0]
+          const event = {
+            id: results[0].id,
+            event_name: results[0].event_name,
+            closing_date: results[0].closing_date,
+            closing_time: results[0].closing_time,
+            email: results[0].email,
+            event_url: results[0].event_url,
+            time_zone: results[0].time_zone,
+            is_endorsement: results[0].is_endorsement,
+            is_withdrawal: results[0].is_withdrawal,
+            is_ediit_entry: results[0].is_ediit_entry,
+            limit_submission: results[0].limit_submission,
+            submission_limit: results[0].submission_limit,
+            event_logo: results[0].event_logo,
+            event_banner: results[0].event_banner,
+            additional_emails: [],
+            industry_types: []
+          };
 
-          if (event.industry_types) {
-            event.industry_types = event.industry_types.split(',')
-          } else {
-            event.industry_types = []
-          }
+          results.forEach(row => {
+            // Add email data to additional_emails array
+            if (row.email_id && row.email_address) {
+              event.additional_emails.push({
+                email_id: row.email_id, 
+                email_address: row.email_address
+              });
+            }
 
-          if (event.additional_emails) {
-            event.additional_emails = event.additional_emails.split(',')
-          } else {
-            event.additional_emails = []
-          }
+            // Add industry data to industry_types array
+            if (row.industry_type_id && row.industry_type_name) {
+              event.industry_types.push({
+                industry_type_id: row.industry_type_id, 
+                industry_type_name: row.industry_type_name
+              });
+            }
+          });
 
-          resolve(event)
+          resolve(event);
         } else {
-          reject(new Error(resposne.eventnotfound))
+          reject(new Error('Event not found'));
         }
-      })
-    })
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
+
+
 
 export const deleteIndustryTypes = async (eventId) => {
   return new Promise((resolve, reject) => {

@@ -86,7 +86,7 @@ router.get('/getJuryName', authenticate, JuryNameget)
 
 router.get('/getEmail/:otpId', GetEmailForVerify)
 
-router.get('/getprofile', authenticate, AdminProfileget)//!-----------  to be done today
+router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
 router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)
 

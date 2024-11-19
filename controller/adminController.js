@@ -433,6 +433,7 @@ export const eventCreate = async (req, res) => {
     return res.status(200).json({
       status: resposne.successTrue,
       message: resposne.createvent,
+      data:eventResult
     })
   } catch (error) {
     return res.status(400).json({
