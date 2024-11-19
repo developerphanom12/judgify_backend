@@ -316,6 +316,18 @@ export function checkAdmin(adminId) {
   });
 }
 
+export function checkeventEmail(email) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM event_details WHERE email = ?";
+    db.query(query, [email], (err, results) => {
+      if (err) {
+        return reject(new Error("Database query error while checking event's email"));
+      }
+      resolve(results.length > 0);
+    });
+  });
+}
+
 export async function createEvent(
   adminId,
   event_name,
@@ -334,25 +346,25 @@ export async function createEvent(
   event_description
 ) {
   const insertSql = `
-    INSERT INTO event_details (
-      adminId, 
-      event_name, 
-      closing_date, 
-      closing_time, 
-      email, 
-      event_url, 
-      time_zone, 
-      is_endorsement, 
-      is_withdrawal, 
-      is_ediit_entry, 
-      limit_submission, 
-      event_logo, 
-      event_banner, 
-      event_description,
-      submission_limit
-    ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+      INSERT INTO event_details (
+        adminId, 
+        event_name, 
+        closing_date, 
+        closing_time, 
+        email, 
+        event_url, 
+        time_zone, 
+        is_endorsement, 
+        is_withdrawal, 
+        is_ediit_entry, 
+        limit_submission, 
+        event_logo, 
+        event_banner, 
+        event_description,
+        submission_limit
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
   const values = [
     adminId,
@@ -397,40 +409,47 @@ export async function createEvent(
   }
 }
 
-export function additional_emails(eventId, additional_email) {
+export function additional_emailssss(eventId, additional_email) {
   return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO additional_emails (eventId, additonal_email) 
-      VALUES (?, ?)
-    `;
-    db.query(query, [eventId, additional_email], (err, result) => { 
-      if (err) {
-        return reject(new Error(resposne.additionalmailinsertFail));
-      }
-      resolve({
-        message: resposne.additionalmailinsertFail,
-        statusCode: 200
-      });
-    });
-  });
+    const InsertSql = `Insert INTO additional_emails (eventId,additonal_email)
+      VALUES (?,?)
+      `
+    const queries = additional_email.map((additional_email) => {
+      return new Promise((res, rej) => {
+        db.query(InsertSql, [eventId, additional_email], (error, result) => {
+          if (error) {
+            console.log("additional Error:", error)
+            rej(error)
+          } else {
+            res(result.insertId)
+          }
+        })
+      })
+    })
+    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
+  })
 }
 
-export function industry_types(eventId, industry_type) {
+export function industry_types(eventId, industry_types) {
   return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO industry_types (eventId, industry_type) 
-      VALUES (?, ?)
-    `;
-    db.query(query, [eventId, industry_type], (err, result) => {
-      if (err) {
-        return reject(new Error(err.message));
-      }
-      resolve({
-        message: resposne.industrytypeInsertFail,
-        statusCode: 200
-      });
-    });
-  });
+    const InsertSql = `INSERT INTO industry_types (eventId, industry_type) 
+   VALUES (?, ?)`
+    const queries = industry_types.map((industry_type) => {
+      return new Promise((res, rej) => {
+        db.query(InsertSql, [eventId, industry_type], (error, result) => {
+          if (error) {
+            console.log("industry Error:", error)
+            rej(error)
+          } else {
+            res(result.insertId)
+          }
+        })
+      })
+    })
+    // console.log("industry Error:",error)
+    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
+
+  })
 }
 
 
@@ -585,9 +604,9 @@ export function exportToExcel(eventId) {
         // console.error('SQL Error:', err);
         return reject(err);
       }
-    
+
       // console.log('Query Results:', results);
-    
+
       results.forEach((row) => {
         worksheet.addRow({
           id: row.id,
@@ -606,11 +625,11 @@ export function exportToExcel(eventId) {
 
       workbook.xlsx.writeBuffer()
         .then((buffer) => {
-          resolve(buffer); 
+          resolve(buffer);
         })
         .catch((writeErr) => {
           console.error('Error writing workbook:', writeErr);
-          reject(writeErr); 
+          reject(writeErr);
         });
     });
   });
@@ -713,7 +732,7 @@ export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
       WHERE is_deleted = 0
       ${id ? 'AND adminId = ?' : ''}
     `;
-    
+
     db.query(countQuery, id ? [id] : [], (countErr, countResults) => {
       if (countErr) {
         return reject(countErr);
@@ -744,8 +763,8 @@ export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
 
       query += ` LIMIT ? OFFSET ?`;
 
-      const queryParams = id 
-        ? [id, parseInt(limit), parseInt(skip)] 
+      const queryParams = id
+        ? [id, parseInt(limit), parseInt(skip)]
         : [parseInt(limit), parseInt(skip)];
 
       db.query(query, queryParams, (err, results) => {
@@ -760,106 +779,6 @@ export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
       });
     });
   });
-}
-
-
-export function sortbyoldest() {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT *  
-      FROM event_details 
-      WHERE is_deleted = 0
-      ORDER BY created_at ASC   
-    `
-
-    db.query(query, (err, results) => {
-      if (err) {
-        return reject(err)
-      }
-
-      resolve(results)
-    })
-  })
-}
-
-export function sortbynewest() {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT *  
-      FROM event_details 
-      WHERE is_deleted = 0
-      ORDER BY created_at DESC   
-    `
-
-    db.query(query, (err, results) => {
-      if (err) {
-        return reject(err)
-      }
-
-      resolve(results)
-    })
-  })
-}
-
-export function getMyEventsSorted(skip, limit) {
-
-  return new Promise((resolve, reject) => {
-    const countQuery = `
-      SELECT COUNT(*) as totalCount
-      FROM event_details
-    `
-
-    db.query(countQuery, (countErr, countResults) => {
-      if (countErr) {
-        return reject(countErr)
-      }
-
-      const totalCount = countResults[0].totalCount
-
-      const query = `
-        SELECT 
-          event_name,
-          closing_date,
-          event_logo,
-          is_pending,
-          is_withdrawn,
-          is_completed,
-          is_draft
-        FROM event_details 
-        ORDER BY created_at
-        LIMIT ? OFFSET ?
-      `
-
-      db.query(query, [parseInt(limit), parseInt(skip)], (err, results) => {
-        if (err) {
-          return reject(err)
-        }
-
-        resolve({
-          totalCount: totalCount,
-          events: results.length ? results : [],
-        })
-      })
-    })
-  })
-}
-
-export function searchEvent(search) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT * FROM event_details 
-      WHERE event_name LIKE ? AND is_deleted = 0`
-
-    const values = [`%${search}%`]
-
-    db.query(query, values, (error, results) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(results)
-      }
-    })
-  })
 }
 
 export async function updateAward(
@@ -974,6 +893,7 @@ export async function getEventById(event_id) {
       ed.submission_limit,
       ed.event_logo,
       ed.event_banner,
+      ed.event_description,
       ae.id AS email_id,
       ae.additonal_email AS email_address,  
       it.id AS industry_type_id,
@@ -1007,23 +927,22 @@ export async function getEventById(event_id) {
             submission_limit: results[0].submission_limit,
             event_logo: results[0].event_logo,
             event_banner: results[0].event_banner,
+            event_description:results[0].event_description,
             additional_emails: [],
             industry_types: []
           };
 
           results.forEach(row => {
-            // Add email data to additional_emails array
             if (row.email_id && row.email_address) {
               event.additional_emails.push({
-                email_id: row.email_id, 
+                email_id: row.email_id,
                 email_address: row.email_address
               });
             }
 
-            // Add industry data to industry_types array
             if (row.industry_type_id && row.industry_type_name) {
               event.industry_types.push({
-                industry_type_id: row.industry_type_id, 
+                industry_type_id: row.industry_type_id,
                 industry_type_name: row.industry_type_name
               });
             }

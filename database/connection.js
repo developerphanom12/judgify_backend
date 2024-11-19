@@ -18,15 +18,6 @@ connection.connect((err) => {
   console.log('Connected to MySQL database');
 });
 
-process.on('SIGINT', () => {
-  connection.end((err) => {
-    if (err) {
-      console.error('Error while closing the database connection:', err.stack);
-    } else {
-      console.log('Database connection closed.');
-    }
-    process.exit(0);
-  });
-});
+
  
 export default connection;

@@ -14,9 +14,6 @@ import {
   getEventDashboard,
   getMyEvents,
   loginAdmin,
-  searchEvent,
-  sortbynewest,
-  sortbyoldest,
   storeOTP,
   updateprofile,
   verifyOTP,
@@ -34,14 +31,12 @@ import {
   publiclyVisible,
   generalSettings,
   overall_score,
-  StartEndUpdate,
   liveEvent,
   archiveEvent,
   CreateScorecardCriteria,
   overallScorecardValue,
   CreateCriteriaSettingValues,
   criteriaSettings,
-  additional_emails,
   updateAdditionalEmails,
   deleteAdditionalEmails,
   CreateJuryGroup,
@@ -74,6 +69,8 @@ import {
   getAdminProfile,
   createCoupon,
   checkAdmin,
+  checkeventEmail,
+  additional_emailssss,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -348,21 +345,21 @@ export const updateforgetPassword = async (req, res) => {
 }
 
 export const eventCreate = async (req, res) => {
-  const role = req.user.role
+  const role = req.user.role;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
-  const adminId = req.user.id
-  const adminExists = await checkAdmin(adminId)
+  const adminId = req.user.id;
+  const adminExists = await checkAdmin(adminId);
   if (!adminExists) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: "No admin Id found or Admin does not exist",
-    })
+    });
   }
   const {
 
@@ -380,30 +377,29 @@ export const eventCreate = async (req, res) => {
     event_description,
     industry_type,
     additional_email,
-  } = req.body
+  } = req.body;
 
+  const checkEmail = await checkeventEmail(email)
+  if (checkEmail) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: "email already exist."
+    })
+  }
   try {
-
-
-    if (Array.isArray(additional_email) && additional_email.includes(email)) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.diffrentemail,
-      })
-    }
 
     if (limit_submission === 1 && (submission_limit === undefined || submission_limit < 1)) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.submissionlimit,
-      })
+        message: resposne.submisionlimit
+      });
     }
 
-    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null
-    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null
+    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null;
+    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null;
 
     if (!logo && !banner) {
-      console.warn('Both logo and banner are not provided.')
+      console.warn('Both logo and banner are not provided.');
     }
 
     const eventResult = await createEvent(
@@ -422,26 +418,36 @@ export const eventCreate = async (req, res) => {
       logo,
       banner,
       event_description
-    )
+    );
+    const emailcreate = await additional_emailssss(eventResult.id, additional_email)
+    if (emailcreate.error) {
+      return res.status(400).json({
+        status: false,
+        message: "failed to create additional email"
+      })
+    }
 
-    const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry))
-    const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email))
+    const indstrycreate = await industry_types(eventResult.id, industry_type)
+    if (indstrycreate.error) {
+      return res.status(400).json({
+        status: false,
+        message: "error.message"
+      })
+    }
 
-    // Await both the industry and additional email promises
-    await Promise.all([...industryPromises, ...additionalEmailPromises])
 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: resposne.createvent,
-      data:eventResult
-    })
+      message: "resposne.createvent",
+    });
   } catch (error) {
+    console.log("erro creating event",error)
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
 
 
 export const awardCreate = async (req, res) => {
@@ -533,11 +539,11 @@ export const Awardsget = async (req, res) => {
   }
 
   const { eventId, search, sortOrder } = req.query;
-
+  const searchTerm = search && search.trim() !== '' ? search : null;
   const order = sortOrder === 'oldest' ? 'oldest' : 'newest';
 
   try {
-    const result = await getAwards(eventId, search, order);
+    const result = await getAwards(eventId, searchTerm, order);
 
     if (result.length > 0) {
       return res.status(200).json({
@@ -571,7 +577,7 @@ if (!fs.existsSync(directoryPath)) {
 
 export const exportCsv = async (req, res) => {
   const role = req.user.role;
-  const eventId = req.query.eventId; 
+  const eventId = req.query.eventId;
 
   if (role !== "admin") {
     return res.status(400).json({
@@ -725,91 +731,11 @@ export const MyEventsget = async (req, res) => {
 };
 
 
-export const SortByOldest = async (req, res) => {
-  const role = req.user.role
 
-  if (role !== "admin") {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.unauth,
-    })
-  }
-  try {
-    const result = await sortbyoldest()
-    if (result.length > 0) {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.fetchSuccess,
-        data: result,
-      })
-    } else {
-      res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-  } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
 
-export const SortBynewest = async (req, res) => {
-  const role = req.user.role
 
-  if (role !== "admin") {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.unauth,
-    })
-  }
-  try {
-    const result = await sortbynewest()
-    if (result.length > 0) {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.fetchSuccess,
-        data: result,
-      })
-    } else {
-      res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-  } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
 
-export const SearchEvent = async (req, res) => {
-  try {
-    const { search } = req.query
-    const result = await searchEvent(search)
-    if (result.length > 0) {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.fetchSuccess,
-        data: result,
-      })
-    } else {
-      res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-  } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
+
 
 export const awardUpdate = async (req, res) => {
   const { role } = req.user
