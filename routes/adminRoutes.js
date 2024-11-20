@@ -42,11 +42,11 @@ router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)//*
 
 router.get('/allAwards', authenticate, validatefilterCategory, Awardsget)//* --------  DONE 
 
-router.get('/download', authenticate, exportCsv)//!-----------  to be done today
+router.get('/download', authenticate, exportCsv)//* --------  DONE
 
 router.post('/updateAwardCategory', authenticate, validateAwardCategoryUpdate, awardUpdate)//!-----------  to be done 
 
-router.delete('/awards/:id', authenticate, deleteAward)//!-----------  to be done 
+router.delete('/awards/:id', authenticate, deleteAward)//* --------  DONE
 
 router.get('/awardget/:awardId', authenticate, AwardByIdget)//!-----------  to be done 
 
