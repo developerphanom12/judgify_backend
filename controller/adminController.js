@@ -71,6 +71,8 @@ import {
   checkAdmin,
   checkeventEmail,
   additional_emailssss,
+  getAwardById,
+  checkAwardId,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -441,7 +443,7 @@ export const eventCreate = async (req, res) => {
       message: "resposne.createvent",
     });
   } catch (error) {
-    console.log("erro creating event",error)
+    console.log("erro creating event", error)
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
@@ -2146,6 +2148,58 @@ export const CreateCoupon = async (req, res) => {
     }
   } catch (error) {
     return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+export const AwardByIdget = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const { awardId } = req.params
+
+  const isDeleted = await checkifDeleted(awardId)
+
+  if (isDeleted) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.awardDeleted,
+    })
+  }
+
+  const awardIdCheck = await checkAwardId(awardId)
+  if (!awardIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: "no award id found",
+    })
+  }
+
+  try {
+    const result = await getAwardById(awardId)
+
+    if (!result) {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      })
+    } else {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      })
+    }
+  } catch (error) {
+    res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
     })

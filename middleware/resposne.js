@@ -193,6 +193,8 @@ const resposne = {
   couponCreatefail:"Failed to create Coupon Code.",
   couponCreateSuccess:"Coupon Code SuccessFully Created.",
   couponFail:"CreateCoupon failed",
-  couponSuccess:"Create Coupon success"
+  couponSuccess:"Create Coupon success",
+  AwardIdRequired:"Invalid Award Id or not Found.",
+  awardDeleted:"Award not found or Deleted "
 }
 export default resposne

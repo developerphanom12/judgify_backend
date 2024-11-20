@@ -6,6 +6,7 @@ const saltRounds = 10
 import ExcelJS from 'exceljs'
 import resposne from "../middleware/resposne.js"
 import { resolve } from "path"
+import { error } from "console"
 dotenv.config()
 
 export function adminRegister(
@@ -863,18 +864,21 @@ export async function softDeleteAward(awardId) {
 
 export function checkifDeleted(awardId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT is_deleted = 1 FROM awards_category WHERE id = ?"
+    const query = "SELECT is_deleted FROM awards_category WHERE id = ?";
     db.query(query, [awardId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck))
+        return reject(new Error(resposne.deletionerrorCheck));  
       }
       if (results.length === 0) {
-        return reject(new Error("Award not found"))
+        return reject(new Error("Award not found"));  
       }
-      resolve(results[0].is_deleted === 1)
-    })
-  })
+      
+      const isDeleted = results[0].is_deleted === 1;
+      resolve(isDeleted);  
+    });
+  });
 }
+
 
 export async function getEventById(event_id) {
   const selectSql = `
@@ -927,7 +931,7 @@ export async function getEventById(event_id) {
             submission_limit: results[0].submission_limit,
             event_logo: results[0].event_logo,
             event_banner: results[0].event_banner,
-            event_description:results[0].event_description,
+            event_description: results[0].event_description,
             additional_emails: [],
             industry_types: []
           };
@@ -2275,5 +2279,57 @@ INSERT INTO coupons (
     }
   } catch (error) {
     throw new Error(`Database error: ${error.message}`)
+  }
+}
+export function checkAwardId(awardId) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM awards_category WHERE id = ?"
+    db.query(query, [awardId], (err, results) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(results.length > 0 ? true : false)
+      }
+    })
+  })
+}
+
+export async function getAwardById(awardId) {
+  const selectSql = `
+        SELECT 
+        id,
+        eventId,
+        category_name, 
+        category_prefix, 
+        belongs_group, 
+        limit_submission, 
+        is_start_date, 
+        is_end_date, 
+        is_endorsement, 
+        start_date, 
+        end_date
+      FROM awards_category 
+      WHERE is_deleted = 0 AND id = ?;
+
+  `;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(selectSql, [awardId], (fetchError, results) => {
+        if (fetchError) {
+          return reject(fetchError); 
+        }
+
+        if (results.length > 0) {
+          return resolve(results[0]);
+        } else {
+          reject(new Error('Award not found')); 
+        }
+      });
+    });
+
+    return result; 
+  } catch (error) {
+    throw new Error(`Database error: ${error.message}`); 
   }
 }
