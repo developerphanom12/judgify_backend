@@ -24,9 +24,9 @@ router.get('/getEmail/:otpId', GetEmailForVerify)//~ -----delete this not used
 
 router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//!----------- to be done today 
+router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//* --------  DONE 
 
-router.post('/newPassword', authenticate, validateNewPass, NewPassword)//!-----------  to be done today
+router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
 
 //----------------------------------------- dashboard events ----------------------------------------------//
 
@@ -44,11 +44,11 @@ router.get('/allAwards', authenticate, validatefilterCategory, Awardsget)//* ---
 
 router.get('/download', authenticate, exportCsv)//* --------  DONE
 
-router.post('/updateAwardCategory', authenticate, validateAwardCategoryUpdate, awardUpdate)//!-----------  to be done 
+router.post('/updateAwardCategory', authenticate, validateAwardCategoryUpdate, awardUpdate)//* --------  DONE 
 
 router.delete('/awards/:id', authenticate, deleteAward)//* --------  DONE
 
-router.get('/awardget/:awardId', authenticate, AwardByIdget)//!-----------  to be done 
+router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE 
 
 //----------------------------------------- Update Event ----------------------------------------------//
 

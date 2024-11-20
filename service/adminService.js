@@ -2309,7 +2309,7 @@ export async function getAwardById(awardId) {
         start_date, 
         end_date
       FROM awards_category 
-      WHERE is_deleted = 0 AND id = ?;
+      WHERE id = ?;
 
   `;
 
@@ -2325,6 +2325,7 @@ export async function getAwardById(awardId) {
         } else {
           reject(new Error('Award not found')); 
         }
+        console.log("ressss",results)
       });
     });
 
