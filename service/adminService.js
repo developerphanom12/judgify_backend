@@ -638,7 +638,6 @@ export function exportToExcel(eventId) {
 
 export function getEventDashboard(skip, limit, id, sortOrder ) {
   return new Promise((resolve, reject) => {
-    // Base query to fetch events
     let query = `
       SELECT 
         id,
@@ -649,26 +648,21 @@ export function getEventDashboard(skip, limit, id, sortOrder ) {
       WHERE adminId = ?
     `;
     
-    // Apply sorting based on the sortOrder parameter
     if (sortOrder === 'newest') {
-      query += ` ORDER BY created_at DESC`; // Sort by newest (descending)
+      query += ` ORDER BY created_at DESC`; 
     } else if (sortOrder === 'oldest') {
-      query += ` ORDER BY created_at ASC`; // Sort by oldest (ascending)
+      query += ` ORDER BY created_at ASC`; 
     }
 
-    // Apply pagination (LIMIT and OFFSET)
     query += ` LIMIT ? OFFSET ?`;
 
-    // Define the parameters for the query
     const queryParams = [id, parseInt(limit), parseInt(skip)];
 
-    // Execute the query with the defined parameters
     db.query(query, queryParams, (err, results) => {
       if (err) {
-        return reject(err); // Reject if there's an error
+        return reject(err); 
       }
 
-      // Resolve with the results, return empty array if no events found
       resolve(results.length ? results : []);
     });
   });
