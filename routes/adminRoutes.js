@@ -24,7 +24,7 @@ router.get('/getEmail/:otpId', GetEmailForVerify)//~ -----delete this not used
 
 router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'),validateAdminUpdateProfile, updateProfile)//* --------  DONE 
+router.post('/profileUpdate', authenticate, upload.single('profile_image'), validateAdminUpdateProfile, updateProfile)//* --------  DONE 
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
 
@@ -54,9 +54,9 @@ router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE
 
 router.get('/getEvent/:event_id', authenticate, MyEventget)//^-------------Second modal 
 
-router.post('/updateCreateEvent', authenticate,validateUpdateEventCreate, eventUpdate)//^-------------Second modal 
+router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//^-------------Second modal 
 
-router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]),validateUpdateEventSocial, eventupdateSocial)
+router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)
 
 router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)
 
@@ -107,4 +107,4 @@ router.get('/getJuryGroups', authenticate, JuryGroupGet)
 
 router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 
-export default router   
+export default router

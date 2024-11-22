@@ -277,7 +277,7 @@ export const validateEventCreate = (req, res, next) => {
       field: err.path[0],
       message: err.message,
     }));
-    
+
     return res.status(400).json({
       status: resposne.successFalse,
       message: 'Validation failed',
@@ -288,7 +288,7 @@ export const validateEventCreate = (req, res, next) => {
 };
 
 const awardCreate = Joi.object({
-  eventId: Joi.number().optional().messages({
+  eventId: Joi.number().required().messages({
     "string.empty": "Event Id is not allowed to be empty",
   }),
   category_name: Joi.string().required().messages({
@@ -430,7 +430,7 @@ export const validateAdminUpdateProfile = (req, res, next) => {
 
 const updateAwardCategory = Joi.object({
 
-  awardId: Joi.number().optional().messages({
+  awardId: Joi.number().required().messages({
     "string.empty": "award ID is not allowed to be empty",
   }),
   category_name: Joi.string().optional().messages({
@@ -454,7 +454,7 @@ const updateAwardCategory = Joi.object({
   is_end_date: Joi.number().valid(0, 1).optional().messages({
     'any.only': 'is End Date must be either 0 or 1',
   }),
-  
+
   start_date: Joi.string().optional().when('is_start_date', {
     is: 1,
     then: Joi.required().messages({
@@ -490,7 +490,7 @@ export const validateAwardCategoryUpdate = (req, res, next) => {
 }
 
 const updateEventCreate = Joi.object({
-  eventId: Joi.number().optional().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
   }),
   event_name: Joi.string().optional().messages({
@@ -560,7 +560,7 @@ export const validateUpdateEventCreate = (req, res, next) => {
 
 const eventupdateSocial = Joi.object({
   eventId: Joi.number()
-    .optional()
+    .required()
     .messages({
       'number.base': 'Event ID must be a valid number',
     }),
@@ -651,7 +651,7 @@ export const ValidateSubmissionIDformat = (req, res, next) => {
 }
 
 const awardDirectory = Joi.object({
-  id: Joi.number().integer().required().messages({
+  id: Joi.number().required().messages({
     "number.base": "ID must be a number",
     "number.integer": "ID must be an integer",
     "any.required": "ID is required"
@@ -993,7 +993,7 @@ export const ValidateAssignJuryCreate = (req, res, next) => {
 }
 
 const scorecardCriteriaUpdate = Joi.object({
-  eventId: Joi.number().optional().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
     "number.integer": "Event ID must be an integer",
   }),
@@ -1230,13 +1230,11 @@ export const ValidateCouponCreate = (req, res, next) => {
 };
 
 const filterCategory = Joi.object({
-  eventId: Joi.string().required().messages({
-    "string.empty": "Event Id is not allowed to be empty",
+  eventId: Joi.number().required().messages({
     "any.required": "Event Id is required",
     "any.empty": "Event Id is not allowed to be empty",
-
   }),
-  sortOrder: Joi.valid('oldest','newest').optional().messages({
+  sortOrder: Joi.valid('oldest', 'newest').optional().messages({
     "string.empty": "Sort Order is not allowed to be empty",
     "any.empty": "Sort Order is not allowed to be empty",
 
