@@ -307,11 +307,11 @@ const awardCreate = Joi.object({
     'number.base': 'Limit Submission must be a valid number',
     'any.required': 'Limit Submission is required',
   }),
-  is_start_date: Joi.number().valid(0, 1).required().messages({
+  is_start_date: Joi.number().valid(0, 1).optional().messages({
     'any.only': 'is Start Date must be either 0 or 1',
     'any.required': 'is Start Date field is required',
   }),
-  is_end_date: Joi.number().valid(0, 1).required().messages({
+  is_end_date: Joi.number().valid(0, 1).optional().messages({
     'any.only': 'is End Date must be either 0 or 1',
     'any.required': 'is End Date field is required',
   }),
@@ -319,11 +319,11 @@ const awardCreate = Joi.object({
     'any.only': 'Endorsement value must be either 0 or 1',
     'any.required': 'Endorsement value field is required',
   }),
-  start_date: Joi.string().messages({
+  start_date: Joi.string().optional().messages({
     'string.empty': "Start date cannot be empty",
     'string.Date': "Start date must be a valid date",
   }),
-  end_date: Joi.string().messages({
+  end_date: Joi.string().optional().messages({
     'string.empty': "End date cannot be empty",
     'string.Date': "End date must be a valid date",
   }),
@@ -589,14 +589,14 @@ const eventupdateSocial = Joi.object({
       'number.base': 'Is social must be a number (0 or 1)',
       'any.only': 'Is social must be either 0 or 1',
     }),
-  social: Joi.string()
-    .valid('facebook', 'linkedin', 'twitter')
+  social: Joi.array()
+    .items(Joi.string().valid('facebook', 'linkedin', 'twitter'))
     .optional()
     .messages({
-      'string.base': 'Social must be a valid string',
-      'any.only': 'Social must be one of the following values: facebook, linkedin, twitter',
+      'array.base': 'Social must be an array of valid strings',
+      'string.base': 'Each social platform must be a valid string',
+      'any.only': 'Each social platform must be one of the following values: facebook, linkedin, twitter',
     }),
-
   event_logo: Joi.any()
     .optional()
     .messages({
@@ -629,10 +629,12 @@ export const validateUpdateEventSocial = (req, res, next) => {
 }
 
 const CreateSubmissionID = Joi.object({
-  id: Joi.number().required().messages({
-    "number.base": "ID must be a number",
-    "any.required": "ID is required"
-  }),
+  eventId: Joi.number()
+    .required()
+    .messages({
+      'number.base': 'Event ID must be a valid number',
+      "any.required": "Event ID is required"
+    }),
   submission_id: Joi.string().required().messages({
     "string.base": "Submission ID must be a string",
     "any.required": "Submission ID is required"
@@ -651,10 +653,9 @@ export const ValidateSubmissionIDformat = (req, res, next) => {
 }
 
 const awardDirectory = Joi.object({
-  id: Joi.number().required().messages({
-    "number.base": "ID must be a number",
-    "number.integer": "ID must be an integer",
-    "any.required": "ID is required"
+  eventId: Joi.number().required().messages({
+    "number.base": "Event ID must be a number",
+    "any.required": "Event ID is required"
   }),
   is_publicly_visble: Joi.number().valid(0, 1).messages({
     'any.only': 'Value must be either 0 or 1',

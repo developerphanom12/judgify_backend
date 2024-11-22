@@ -443,6 +443,7 @@ export const eventCreate = async (req, res) => {
     return res.status(200).json({
       status: resposne.successTrue,
       message: "resposne.createvent",
+      eventId: eventResult.id
     });
   } catch (error) {
     console.log("erro creating event", error)
@@ -522,6 +523,7 @@ export const awardCreate = async (req, res) => {
       return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.awardcreate,
+        awardId: result.id
       })
     }
   } catch (error) {
@@ -614,38 +616,48 @@ export const exportCsv = async (req, res) => {
 };
 
 export const dashboardEvents = async (req, res) => {
-  const role = req.user.role
-  const id = req.user.id
-  // console.log("id", id, role)
+  const role = req.user.role;
+  const id = req.user.id;
+
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
+  const { skip, limit, sortOrder } = req.query;
+
+  console.log("Query Params:", req.query);
+
+  const validSortOrders = ['newest', 'oldest'];
+  const order = validSortOrders.includes(sortOrder) ? sortOrder : 'newest';
 
   try {
-    const result = await getEventDashboard(id)
+    const parsedSkip = parseInt(skip, 10) || 0;
+    const parsedLimit = parseInt(limit, 10) || 8;
+
+    const result = await getEventDashboard(parsedSkip, parsedLimit, id, order);
+
     if (result.length > 0) {
-      res.status(200).json({
+      return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result,
-      })
+      });
     } else {
-      res.status(400).json({
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      })
+      });
     }
   } catch (error) {
-    res.status(400).json({
+    // console.error("Error fetching dashboard events:", error);
+    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
-
+};
 
 export const NewPassword = async (req, res) => {
   const role = req.user.role
@@ -704,7 +716,7 @@ export const MyEventsget = async (req, res) => {
 
   // console.log("Query Params:", req.query); 
 
-  const sortOrder = order === 'oldest' ? 'oldest' : 'newest';
+  const sortOrder = order === 'newest' ? 'oldest' : 'newest';
 
   // console.log("Sort order:", sortOrder);  
 
@@ -781,7 +793,7 @@ export const awardUpdate = async (req, res) => {
     if (is_start_date === 0) {
       await EmptyStartDate(awardId);
     }
-  
+
     if (is_end_date === 0) {
       await EmptyEndDate(awardId);
     }
@@ -1058,9 +1070,9 @@ export const SubmissionFormatCreate = async (req, res) => {
     })
   }
 
-  const { id, submission_id } = req.body
+  const { eventId, submission_id } = req.body
 
-  const eventIdCheck = await checkeventId(id)
+  const eventIdCheck = await checkeventId(eventId)
 
   if (!eventIdCheck) {
     return res.status(400).json({
@@ -1070,7 +1082,7 @@ export const SubmissionFormatCreate = async (req, res) => {
   }
 
   try {
-    const result = await addSubmissionId(id, submission_id)
+    const result = await addSubmissionId(eventId, submission_id)
 
     if (result.affectedRows === 0) {
       return res.status(400).json({
@@ -1101,9 +1113,9 @@ export const visiblePublicly = async (req, res) => {
     })
   }
 
-  const { id, is_publicly_visble } = req.body
+  const { eventId, is_publicly_visble } = req.body
 
-  const eventIdCheck = await checkeventId(id)
+  const eventIdCheck = await checkeventId(eventId)
 
   if (!eventIdCheck) {
     return res.status(400).json({
@@ -1113,7 +1125,7 @@ export const visiblePublicly = async (req, res) => {
   }
 
   try {
-    const result = await publiclyVisible(id, is_publicly_visble)
+    const result = await publiclyVisible(eventId, is_publicly_visble)
 
     if (result.affectedRows === 0) {
       return res.status(400).json({

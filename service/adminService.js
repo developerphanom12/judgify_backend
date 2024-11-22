@@ -636,27 +636,44 @@ export function exportToExcel(eventId) {
   });
 }
 
-export function getEventDashboard(id) {
+export function getEventDashboard(skip, limit, id, sortOrder ) {
   return new Promise((resolve, reject) => {
-    const query = `
-        SELECT 
-          id,
-          event_name,
-          event_logo,
-          closing_date  
-          FROM event_details
-          WHERE adminId = ?
-      `
-    const value = [id]
-    db.query(query, value, (err, results) => {
+    // Base query to fetch events
+    let query = `
+      SELECT 
+        id,
+        event_name,
+        event_logo,
+        closing_date
+      FROM event_details
+      WHERE adminId = ?
+    `;
+    
+    // Apply sorting based on the sortOrder parameter
+    if (sortOrder === 'newest') {
+      query += ` ORDER BY created_at DESC`; // Sort by newest (descending)
+    } else if (sortOrder === 'oldest') {
+      query += ` ORDER BY created_at ASC`; // Sort by oldest (ascending)
+    }
+
+    // Apply pagination (LIMIT and OFFSET)
+    query += ` LIMIT ? OFFSET ?`;
+
+    // Define the parameters for the query
+    const queryParams = [id, parseInt(limit), parseInt(skip)];
+
+    // Execute the query with the defined parameters
+    db.query(query, queryParams, (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err); // Reject if there's an error
       }
 
-      resolve(results.length ? results : [])
-    })
-  })
+      // Resolve with the results, return empty array if no events found
+      resolve(results.length ? results : []);
+    });
+  });
 }
+
 
 export async function checkCurrentPass(userId, password) {
   return new Promise((resolve, reject) => {
@@ -725,7 +742,7 @@ export async function newPasswordd({ userId, currentPassword, newPassword }) {
   }
 }
 
-export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
+export function getMyEvents(skip, limit, id, sortOrder = 'newest') {
   return new Promise((resolve, reject) => {
     const countQuery = `
       SELECT COUNT(*) as totalCount
@@ -1130,7 +1147,7 @@ export const updateEventSocial = (updates, eventId) => {
     db.query(checkEventQuery, [eventId], (err, result) => {
       if (err) return reject(err)
       if (result.length === 0) {
-        return reject(new Error(resposne.eventnotfound))
+        return reject(new Error('Event not found.'))
       }
 
       if (updates.imageFilename) {
@@ -1152,6 +1169,7 @@ export const updateEventSocial = (updates, eventId) => {
         updateFields.push('closing_messsage = ?')
         updateValues.push(updates.closing_messsage)
       }
+
       if (updates.jury_welcm_messsage) {
         updateFields.push('jury_welcm_messsage = ?')
         updateValues.push(updates.jury_welcm_messsage)
@@ -1163,12 +1181,13 @@ export const updateEventSocial = (updates, eventId) => {
       }
 
       if (updates.social !== undefined) {
-        const validSocialPlatforms = ['facebook', 'linkedin', 'twitter']
-        if (!validSocialPlatforms.includes(updates.social)) {
-          return reject(new Error(resposne.invalidSocialplatform))
+        if (Array.isArray(updates.social)) {
+          updateFields.push('social = ?')
+          updateValues.push(updates.social.join(','))
+        } else {
+          updateFields.push('social = ?')
+          updateValues.push(updates.social)
         }
-        updateFields.push('social = ?')
-        updateValues.push(updates.social)
       }
 
       if (updates.social_image) {
@@ -1177,9 +1196,9 @@ export const updateEventSocial = (updates, eventId) => {
       }
 
       if (updateFields.length === 0) {
-        return reject(new Error(resposne.noUpdateFieldProvided))
+        return reject(new Error('No update field provided.'))
       }
-
+ 
       const updateSql = `
         UPDATE event_details
         SET ${updateFields.join(', ')}
@@ -1188,23 +1207,25 @@ export const updateEventSocial = (updates, eventId) => {
 
       db.query(updateSql, [...updateValues, eventId], (error, result) => {
         if (error) {
-          return reject(new Error(resposne.dbUpdateFail))
+          console.log("db error:", error)
+          return reject(new Error('Database update failed.'))
         }
 
         if (result.affectedRows > 0) {
           resolve(true)
         } else {
-          reject(new Error(resposne.noaffectedRowwithId))
+          reject(new Error('No affected row found with this ID.'))
         }
       })
     })
   })
 }
 
-export async function addSubmissionId(id, submission_id) {
+
+export async function addSubmissionId(eventId, submission_id) {
 
   const updateSql = `UPDATE event_details SET submission_id = ? WHERE id = ?`
-  const values = [submission_id, id]
+  const values = [submission_id, eventId]
   try {
     const result = await new Promise((resolve, reject) => {
 
@@ -1229,10 +1250,10 @@ export async function addSubmissionId(id, submission_id) {
   }
 }
 
-export async function publiclyVisible(id, is_publicly_visble) {
+export async function publiclyVisible(eventId, is_publicly_visble) {
 
   const updateSql = `UPDATE event_details SET is_publicly_visble = ? WHERE id = ?`
-  const values = [is_publicly_visble, id]
+  const values = [is_publicly_visble, eventId]
   try {
     const result = await new Promise((resolve, reject) => {
 
