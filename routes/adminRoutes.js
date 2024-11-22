@@ -1,6 +1,6 @@
 import express from "express"
 import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, CreateGeneralSettings, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv, GetEmailForVerify, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, sendOTP, SubmissionFormatCreate, updateforgetPassword, updateProfile, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
-import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory } from '../validation/AdminValidation.js'
+import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory, validateAdminUpdateProfile, validateUpdateEventCreate, validateUpdateEventSocial } from '../validation/AdminValidation.js'
 import authenticate from '../middleware/authentication.js'
 import upload from '../middleware/multer.js'
 
@@ -24,7 +24,7 @@ router.get('/getEmail/:otpId', GetEmailForVerify)//~ -----delete this not used
 
 router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//* --------  DONE 
+router.post('/profileUpdate', authenticate, upload.single('profile_image'),validateAdminUpdateProfile, updateProfile)//* --------  DONE 
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
 
@@ -52,11 +52,11 @@ router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE
 
 //----------------------------------------- Update Event ----------------------------------------------//
 
-router.get('/getEvent/:event_id', authenticate, MyEventget)//^-------------Second modal //also get all the data as event images and description too
+router.get('/getEvent/:event_id', authenticate, MyEventget)//^-------------Second modal 
 
-router.post('/updateCreateEvent', authenticate, eventUpdate)//^-------------Second modal 
+router.post('/updateCreateEvent', authenticate,validateUpdateEventCreate, eventUpdate)//^-------------Second modal 
 
-router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), eventupdateSocial)
+router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]),validateUpdateEventSocial, eventupdateSocial)
 
 router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)
 

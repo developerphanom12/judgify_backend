@@ -782,64 +782,118 @@ export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
   });
 }
 
-export async function updateAward(
-  awardId,
-  category_name,
-  category_prefix,
-  belongs_group,
-  limit_submission,
-  is_start_date,
-  is_end_date,
-  is_endorsement,
-  start_date,
-  end_date
-) {
-  const updateSql = `
-    UPDATE awards_category SET
-      category_name = ?,
-      category_prefix = ?,
-      belongs_group = ?,
-      limit_submission = ?,
-      is_start_date = ?,
-      is_end_date = ?,
-      is_endorsement = ?,
-      start_date = ?,
-      end_date = ?
-    WHERE id = ?
-  `
+export async function updateAward(awardId, updates) {
+  let updateFields = [];
+  let updateValues = [];
 
-  const values = [
-    category_name,
-    category_prefix,
-    belongs_group,
-    limit_submission,
-    is_start_date,
-    is_end_date,
-    is_endorsement,
-    start_date,
-    end_date,
-    awardId
-  ]
+  const fields = [
+    'category_name',
+    'category_prefix',
+    'belongs_group',
+    'limit_submission',
+    'is_start_date',
+    'is_end_date',
+    'is_endorsement',
+    'start_date',
+    'end_date'
+  ];
+
+  fields.forEach(field => {
+    if (updates[field] !== undefined) {
+      updateFields.push(`${field} = ?`);
+      updateValues.push(updates[field]);
+    }
+  });
+
+  updateValues.push(awardId);
+
+  if (updateFields.length === 0) {
+    return Promise.reject({
+      message: "No valid fields to update",
+    });
+  }
+
+  const updateSql = `
+    UPDATE awards_category
+    SET ${updateFields.join(', ')}
+    WHERE id = ?
+  `;
+
+  // console.log("SQL Query:", updateSql);
+  // console.log("Values:", updateValues);
+
+  return new Promise((resolve, reject) => {
+    db.query(updateSql, updateValues, (updateError, result) => {
+      if (updateError) {
+        console.error("Update Error:", updateError);
+        return reject({
+          message: "Failed to update award",
+          error: updateError,
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return reject({
+          message: "No award found with the given ID",
+          awardId: awardId,
+        });
+      }
+
+      resolve({
+        message: "Award updated successfully",
+      });
+    });
+
+  });
+}
+
+export async function EmptyStartDate(awardId) {
+  const updateSql = "UPDATE awards_category SET start_date = NULL WHERE id = ?";
 
   try {
     const result = await new Promise((resolve, reject) => {
-      db.query(updateSql, values, (updateError, result) => {
-        if (updateError) {
-          return reject(new Error(`Database update error: ${updateError.message}`))
+      db.query(updateSql, [awardId], (err, result) => {
+        if (err) {
+          return reject(new Error("Failed to nullify start date"));
         }
-        if (result.affectedRows > 0) {
-          resolve({ message: resposne.awardUpdateSuccess })
-        } else {
-          reject(new Error(resposne.awardUpdateFail))
-        }
-      })
-    })
+        resolve(result);
+      });
+    });
 
-    return result
+    if (result.affectedRows === 0) {
+      throw new Error("No affected rows.");
+    }
+
+    return "Start date nullified successfully";
   } catch (error) {
-    throw new Error(`Failed to update award: ${error.message}`)
+    throw error;
   }
 }
+
+export async function EmptyEndDate(awardId) {
+  const updateSql = "UPDATE awards_category SET end_date = NULL WHERE id = ?";
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(updateSql, [awardId], (err, result) => {
+        if (err) {
+          return reject(new Error("Failed to nullify end date"));
+        }
+        resolve(result);
+      });
+    });
+
+    if (result.affectedRows === 0) {
+      throw new Error("No affected rows.");
+    }
+
+    return "End date nullified successfully";
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 
 export async function softDeleteAward(awardId) {
   const updateSql = "UPDATE awards_category SET is_deleted = 1 WHERE id = ?"
@@ -867,14 +921,14 @@ export function checkifDeleted(awardId) {
     const query = "SELECT is_deleted FROM awards_category WHERE id = ?";
     db.query(query, [awardId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck));  
+        return reject(new Error(resposne.deletionerrorCheck));
       }
       if (results.length === 0) {
-        return reject(new Error("Award not found"));  
+        return reject(new Error("Award not found"));
       }
-      
+
       const isDeleted = results[0].is_deleted === 1;
-      resolve(isDeleted);  
+      resolve(isDeleted);
     });
   });
 }
@@ -2317,20 +2371,20 @@ export async function getAwardById(awardId) {
     const result = await new Promise((resolve, reject) => {
       db.query(selectSql, [awardId], (fetchError, results) => {
         if (fetchError) {
-          return reject(fetchError); 
+          return reject(fetchError);
         }
 
         if (results.length > 0) {
           return resolve(results[0]);
         } else {
-          reject(new Error('Award not found')); 
+          reject(new Error('Award not found'));
         }
-        console.log("ressss",results)
+        console.log("ressss", results)
       });
     });
 
-    return result; 
+    return result;
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`); 
+    throw new Error(`Database error: ${error.message}`);
   }
 }

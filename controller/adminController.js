@@ -73,6 +73,8 @@ import {
   additional_emailssss,
   getAwardById,
   checkAwardId,
+  EmptyStartDate,
+  EmptyEndDate,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -733,20 +735,14 @@ export const MyEventsget = async (req, res) => {
 };
 
 
-
-
-
-
-
-
 export const awardUpdate = async (req, res) => {
-  const { role } = req.user
+  const { role } = req.user;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
   const {
     awardId,
@@ -759,54 +755,59 @@ export const awardUpdate = async (req, res) => {
     is_endorsement,
     start_date,
     end_date
-  } = req.body
+  } = req.body;
 
-  if (is_start_date === 1 && (!start_date || start_date < 1)) {
+  const updates = {};
+
+  if (category_name) updates.category_name = category_name;
+  if (category_prefix) updates.category_prefix = category_prefix;
+  if (belongs_group) updates.belongs_group = belongs_group;
+  if (limit_submission !== undefined) updates.limit_submission = limit_submission;
+  if (is_start_date !== undefined) updates.is_start_date = is_start_date;
+  if (is_end_date !== undefined) updates.is_end_date = is_end_date;
+  if (is_endorsement !== undefined) updates.is_endorsement = is_endorsement;
+  if (start_date !== undefined) updates.start_date = start_date;
+  if (end_date !== undefined) updates.end_date = end_date;
+
+  if (Object.keys(updates).length === 0) {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: resposne.is_start_REquired,
-    })
-  }
-
-  if (is_end_date === 1 && (!end_date || end_date < 1)) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.is_end_REquired,
-    })
+      message: resposne.noupdate,
+    });
   }
 
   try {
-    const result = await updateAward(
-      awardId,
-      category_name,
-      category_prefix,
-      belongs_group,
-      limit_submission,
-      is_start_date,
-      is_end_date,
-      is_endorsement,
-      start_date,
-      end_date
-    )
+
+    if (is_start_date === 0) {
+      await EmptyStartDate(awardId);
+    }
+  
+    if (is_end_date === 0) {
+      await EmptyEndDate(awardId);
+    }
+
+    const result = await updateAward(awardId, updates);
 
     if (result.message) {
       return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.awardUpdateSuccess,
-      })
+      });
     } else {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.awardUpdateFail,
-      })
+      });
     }
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
+
+
 
 export const deleteAward = async (req, res) => {
   const { role } = req.user
