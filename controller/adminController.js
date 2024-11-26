@@ -181,6 +181,7 @@ export const updateProfile = async (req, res) => {
   const { first_name, last_name, email, company, mobile_number, time_zone, job_title } = req.body
   const profile_image = req.file
 
+
   try {
 
 
@@ -583,7 +584,7 @@ if (!fs.existsSync(directoryPath)) {
 
 export const exportCsv = async (req, res) => {
   const role = req.user.role;
-  const eventId = req.query.eventId;
+  const eventId = req.query.eventId; 
 
   if (role !== "admin") {
     return res.status(400).json({
@@ -592,11 +593,15 @@ export const exportCsv = async (req, res) => {
     });
   }
 
+
   try {
+    // console.log('Event ID:', eventId);
     // console.log('Event ID:', eventId);
 
     const sheet = await exportToExcel(eventId);
 
+
+    fs.writeFileSync(filePath, sheet);
     const filePath = path.join(directoryPath, 'Awards Category.xlsx');
 
     fs.writeFileSync(filePath, sheet);
@@ -606,7 +611,9 @@ export const exportCsv = async (req, res) => {
       message: resposne.downloadSuccess,
       path: filePath,
     });
+     
   } catch (error) {
+    // console.error('Error exporting to Excel:', error);
     // console.error('Error exporting to Excel:', error);
     res.status(400).send({
       status: resposne.successFalse,
@@ -614,7 +621,6 @@ export const exportCsv = async (req, res) => {
     });
   }
 };
-
 export const dashboardEvents = async (req, res) => {
   const role = req.user.role;
   const id = req.user.id;
