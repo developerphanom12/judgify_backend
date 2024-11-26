@@ -6,6 +6,7 @@ const saltRounds = 10
 import ExcelJS from 'exceljs'
 import resposne from "../middleware/resposne.js"
 import { resolve } from "path"
+import { error } from "console"
 dotenv.config()
 
 export function adminRegister(
@@ -306,14 +307,26 @@ export async function changeforgetPassword({ email, newPassword }) {
 
 export function checkAdmin(adminId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE id = ?"
+    const query = "SELECT * FROM admin WHERE id = ?";
     db.query(query, [adminId], (err, results) => {
       if (err) {
-        return reject(new Error("Database query error while checking admin"))
+        return reject(new Error("Database query error while checking admin"));
       }
-      resolve(results.length > 0)
-    })
-  })
+      resolve(results.length > 0);
+    });
+  });
+}
+
+export function checkeventEmail(email) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM event_details WHERE email = ?";
+    db.query(query, [email], (err, results) => {
+      if (err) {
+        return reject(new Error("Database query error while checking event's email"));
+      }
+      resolve(results.length > 0);
+    });
+  });
 }
 
 export async function createEvent(
@@ -334,25 +347,25 @@ export async function createEvent(
   event_description
 ) {
   const insertSql = `
-    INSERT INTO event_details (
-      adminId, 
-      event_name, 
-      closing_date, 
-      closing_time, 
-      email, 
-      event_url, 
-      time_zone, 
-      is_endorsement, 
-      is_withdrawal, 
-      is_ediit_entry, 
-      limit_submission, 
-      event_logo, 
-      event_banner, 
-      event_description,
-      submission_limit
-    ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `
+      INSERT INTO event_details (
+        adminId, 
+        event_name, 
+        closing_date, 
+        closing_time, 
+        email, 
+        event_url, 
+        time_zone, 
+        is_endorsement, 
+        is_withdrawal, 
+        is_ediit_entry, 
+        limit_submission, 
+        event_logo, 
+        event_banner, 
+        event_description,
+        submission_limit
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
   const values = [
     adminId,
@@ -370,68 +383,76 @@ export async function createEvent(
     event_banner,
     event_description,
     submission_limit
-  ]
+  ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Error inserting event: ${insertError.message}`))
+          return reject(new Error(`Error inserting event: ${insertError.message}`));
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error("Event creation failed: No insert ID"))
+          reject(new Error("Event creation failed: No insert ID"));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
       message: resposne.createvent,
       statusCode: 201
-    }
+    };
   } catch (error) {
-    // console.log("Error in createEvent:", error)
-    throw new Error(`Database error: ${error.message}`)
+    console.log("Error in createEvent:", error);
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
-export function additional_emails(eventId, additional_email) {
+export function additional_emailssss(eventId, additional_email) {
   return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO additional_emails (eventId, additonal_email) 
-      VALUES (?, ?)
-    `
-    db.query(query, [eventId, additional_email], (err, result) => {
-      if (err) {
-        return reject(new Error(resposne.additionalmailinsertFail))
-      }
-      resolve({
-        message: resposne.additionalmailinsertFail,
-        statusCode: 200
+    const InsertSql = `Insert INTO additional_emails (eventId,additonal_email)
+      VALUES (?,?)
+      `
+    const queries = additional_email.map((additional_email) => {
+      return new Promise((res, rej) => {
+        db.query(InsertSql, [eventId, additional_email], (error, result) => {
+          if (error) {
+            console.log("additional Error:", error)
+            rej(error)
+          } else {
+            res(result.insertId)
+          }
+        })
       })
     })
+    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
   })
 }
 
-export function industry_types(eventId, industry_type) {
+export function industry_types(eventId, industry_types) {
   return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO industry_types (eventId, industry_type) 
-      VALUES (?, ?)
-    `
-    db.query(query, [eventId, industry_type], (err, result) => {
-      if (err) {
-        return reject(new Error(err.message))
-      }
-      resolve({
-        message: resposne.industrytypeInsertFail,
-        statusCode: 200
+    const InsertSql = `INSERT INTO industry_types (eventId, industry_type) 
+   VALUES (?, ?)`
+    const queries = industry_types.map((industry_type) => {
+      return new Promise((res, rej) => {
+        db.query(InsertSql, [eventId, industry_type], (error, result) => {
+          if (error) {
+            console.log("industry Error:", error)
+            rej(error)
+          } else {
+            res(result.insertId)
+          }
+        })
       })
     })
+    // console.log("industry Error:",error)
+    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
+
   })
 }
+
 
 export function checkeventId(eventId) {
   return new Promise((resolve, reject) => {
@@ -547,7 +568,6 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
   });
 }
 
-
 export function exportToExcel(eventId) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Award Category");
@@ -585,9 +605,9 @@ export function exportToExcel(eventId) {
         // console.error('SQL Error:', err);
         return reject(err);
       }
-    
+
       // console.log('Query Results:', results);
-    
+
       results.forEach((row) => {
         worksheet.addRow({
           id: row.id,
@@ -606,39 +626,48 @@ export function exportToExcel(eventId) {
 
       workbook.xlsx.writeBuffer()
         .then((buffer) => {
-          resolve(buffer); 
+          resolve(buffer);
         })
         .catch((writeErr) => {
           console.error('Error writing workbook:', writeErr);
-          reject(writeErr); 
+          reject(writeErr);
         });
     });
   });
 }
 
-
-
-export function getEventDashboard(id) {
+export function getEventDashboard(skip, limit, id, sortOrder ) {
   return new Promise((resolve, reject) => {
-    const query = `
-        SELECT 
-          id,
-          event_name,
-          event_logo,
-          closing_date  
-          FROM event_details
-          WHERE adminId = ?
-      `
-    const value = [id]
-    db.query(query, value, (err, results) => {
+    let query = `
+      SELECT 
+        id,
+        event_name,
+        event_logo,
+        closing_date
+      FROM event_details
+      WHERE adminId = ?
+    `;
+    
+    if (sortOrder === 'newest') {
+      query += ` ORDER BY created_at DESC`; 
+    } else if (sortOrder === 'oldest') {
+      query += ` ORDER BY created_at ASC`; 
+    }
+
+    query += ` LIMIT ? OFFSET ?`;
+
+    const queryParams = [id, parseInt(limit), parseInt(skip)];
+
+    db.query(query, queryParams, (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err); 
       }
 
-      resolve(results.length ? results : [])
-    })
-  })
+      resolve(results.length ? results : []);
+    });
+  });
 }
+
 
 export async function checkCurrentPass(userId, password) {
   return new Promise((resolve, reject) => {
@@ -707,7 +736,7 @@ export async function newPasswordd({ userId, currentPassword, newPassword }) {
   }
 }
 
-export function getMyEvents(skip, limit, id) {
+export function getMyEvents(skip, limit, id, sortOrder = 'newest') {
   return new Promise((resolve, reject) => {
     const countQuery = `
       SELECT COUNT(*) as totalCount
@@ -723,23 +752,34 @@ export function getMyEvents(skip, limit, id) {
 
       const totalCount = countResults[0].totalCount;
 
-      const query = `
+      let query = `
         SELECT 
-          id,
-          event_name,
-          closing_date,
-          event_logo,
-          is_pending,
-          is_withdrawn,
-          is_completed,
-          is_draft
-        FROM event_details 
-        WHERE is_deleted = 0
-        ${id ? 'AND adminId = ?' : ''}
-        LIMIT ? OFFSET ?
+          a.id,
+          a.event_name,
+          a.closing_date,
+          a.event_logo,
+          a.is_pending,
+          a.is_withdrawn,
+          a.is_completed,
+          a.is_draft
+        FROM event_details a
+        WHERE a.is_deleted = 0
+        ${id ? 'AND a.adminId = ?' : ''}
       `;
 
-      db.query(query, id ? [id, parseInt(limit), parseInt(skip)] : [parseInt(limit), parseInt(skip)], (err, results) => {
+      if (sortOrder === 'newest') {
+        query += ` ORDER BY a.created_at DESC`;
+      } else if (sortOrder === 'oldest') {
+        query += ` ORDER BY a.created_at ASC`;
+      }
+
+      query += ` LIMIT ? OFFSET ?`;
+
+      const queryParams = id
+        ? [id, parseInt(limit), parseInt(skip)]
+        : [parseInt(limit), parseInt(skip)];
+
+      db.query(query, queryParams, (err, results) => {
         if (err) {
           return reject(err);
         }
@@ -753,164 +793,118 @@ export function getMyEvents(skip, limit, id) {
   });
 }
 
+export async function updateAward(awardId, updates) {
+  let updateFields = [];
+  let updateValues = [];
 
-export function sortbyoldest() {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT *  
-      FROM event_details 
-      WHERE is_deleted = 0
-      ORDER BY created_at ASC   
-    `
+  const fields = [
+    'category_name',
+    'category_prefix',
+    'belongs_group',
+    'limit_submission',
+    'is_start_date',
+    'is_end_date',
+    'is_endorsement',
+    'start_date',
+    'end_date'
+  ];
 
-    db.query(query, (err, results) => {
-      if (err) {
-        return reject(err)
-      }
+  fields.forEach(field => {
+    if (updates[field] !== undefined) {
+      updateFields.push(`${field} = ?`);
+      updateValues.push(updates[field]);
+    }
+  });
 
-      resolve(results)
-    })
-  })
-}
+  updateValues.push(awardId);
 
-export function sortbynewest() {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT *  
-      FROM event_details 
-      WHERE is_deleted = 0
-      ORDER BY created_at DESC   
-    `
+  if (updateFields.length === 0) {
+    return Promise.reject({
+      message: "No valid fields to update",
+    });
+  }
 
-    db.query(query, (err, results) => {
-      if (err) {
-        return reject(err)
-      }
-
-      resolve(results)
-    })
-  })
-}
-
-export function getMyEventsSorted(skip, limit) {
-
-  return new Promise((resolve, reject) => {
-    const countQuery = `
-      SELECT COUNT(*) as totalCount
-      FROM event_details
-    `
-
-    db.query(countQuery, (countErr, countResults) => {
-      if (countErr) {
-        return reject(countErr)
-      }
-
-      const totalCount = countResults[0].totalCount
-
-      const query = `
-        SELECT 
-          event_name,
-          closing_date,
-          event_logo,
-          is_pending,
-          is_withdrawn,
-          is_completed,
-          is_draft
-        FROM event_details 
-        ORDER BY created_at
-        LIMIT ? OFFSET ?
-      `
-
-      db.query(query, [parseInt(limit), parseInt(skip)], (err, results) => {
-        if (err) {
-          return reject(err)
-        }
-
-        resolve({
-          totalCount: totalCount,
-          events: results.length ? results : [],
-        })
-      })
-    })
-  })
-}
-
-export function searchEvent(search) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT * FROM event_details 
-      WHERE event_name LIKE ? AND is_deleted = 0`
-
-    const values = [`%${search}%`]
-
-    db.query(query, values, (error, results) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(results)
-      }
-    })
-  })
-}
-
-export async function updateAward(
-  awardId,
-  category_name,
-  category_prefix,
-  belongs_group,
-  limit_submission,
-  is_start_date,
-  is_end_date,
-  is_endorsement,
-  start_date,
-  end_date
-) {
   const updateSql = `
-    UPDATE awards_category SET
-      category_name = ?,
-      category_prefix = ?,
-      belongs_group = ?,
-      limit_submission = ?,
-      is_start_date = ?,
-      is_end_date = ?,
-      is_endorsement = ?,
-      start_date = ?,
-      end_date = ?
+    UPDATE awards_category
+    SET ${updateFields.join(', ')}
     WHERE id = ?
-  `
+  `;
 
-  const values = [
-    category_name,
-    category_prefix,
-    belongs_group,
-    limit_submission,
-    is_start_date,
-    is_end_date,
-    is_endorsement,
-    start_date,
-    end_date,
-    awardId
-  ]
+  // console.log("SQL Query:", updateSql);
+  // console.log("Values:", updateValues);
+
+  return new Promise((resolve, reject) => {
+    db.query(updateSql, updateValues, (updateError, result) => {
+      if (updateError) {
+        console.error("Update Error:", updateError);
+        return reject({
+          message: "Failed to update award",
+          error: updateError,
+        });
+      }
+
+      if (result.affectedRows === 0) {
+        return reject({
+          message: "No award found with the given ID",
+          awardId: awardId,
+        });
+      }
+
+      resolve({
+        message: "Award updated successfully",
+      });
+    });
+
+  });
+}
+
+export async function EmptyStartDate(awardId) {
+  const updateSql = "UPDATE awards_category SET start_date = NULL WHERE id = ?";
 
   try {
     const result = await new Promise((resolve, reject) => {
-      db.query(updateSql, values, (updateError, result) => {
-        if (updateError) {
-          return reject(new Error(`Database update error: ${updateError.message}`))
+      db.query(updateSql, [awardId], (err, result) => {
+        if (err) {
+          return reject(new Error("Failed to nullify start date"));
         }
-        if (result.affectedRows > 0) {
-          resolve({ message: resposne.awardUpdateSuccess })
-        } else {
-          reject(new Error(resposne.awardUpdateFail))
-        }
-      })
-    })
+        resolve(result);
+      });
+    });
 
-    return result
+    if (result.affectedRows === 0) {
+      throw new Error("No affected rows.");
+    }
+
+    return "Start date nullified successfully";
   } catch (error) {
-    throw new Error(`Failed to update award: ${error.message}`)
+    throw error;
   }
 }
+
+export async function EmptyEndDate(awardId) {
+  const updateSql = "UPDATE awards_category SET end_date = NULL WHERE id = ?";
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(updateSql, [awardId], (err, result) => {
+        if (err) {
+          return reject(new Error("Failed to nullify end date"));
+        }
+        resolve(result);
+      });
+    });
+
+    if (result.affectedRows === 0) {
+      throw new Error("No affected rows.");
+    }
+
+    return "End date nullified successfully";
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 
 export async function softDeleteAward(awardId) {
   const updateSql = "UPDATE awards_category SET is_deleted = 1 WHERE id = ?"
@@ -935,79 +929,108 @@ export async function softDeleteAward(awardId) {
 
 export function checkifDeleted(awardId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT is_deleted = 1 FROM awards_category WHERE id = ?"
+    const query = "SELECT is_deleted FROM awards_category WHERE id = ?";
     db.query(query, [awardId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck))
+        return reject(new Error(resposne.deletionerrorCheck));
       }
       if (results.length === 0) {
-        return reject(new Error("Award not found"))
+        return reject(new Error("Award not found"));
       }
-      resolve(results[0].is_deleted === 1)
-    })
-  })
+
+      const isDeleted = results[0].is_deleted === 1;
+      resolve(isDeleted);
+    });
+  });
 }
+
 
 export async function getEventById(event_id) {
   const selectSql = `
-      SELECT 
-        ed.id,
-        ed.event_name, 
-        ed.closing_date,
-        ed.closing_time,
-        ed.email,
-        ed.event_url,
-        ed.time_zone,
-        ed.is_endorsement,
-        ed.is_withdrawal,
-        ed.is_ediit_entry,  
-        ed.limit_submission,
-        ed.submission_limit,
-        ed.event_logo,
-        ed.event_banner,
-        ed.event_description,
-        GROUP_CONCAT(DISTINCT ae.additonal_email ORDER BY ae.additonal_email) AS additional_emails,  
-        GROUP_CONCAT(DISTINCT it.industry_type ORDER BY it.industry_type) AS industry_types
+    SELECT 
+      ed.id,
+      ed.event_name, 
+      ed.closing_date,
+      ed.closing_time,
+      ed.email,
+      ed.event_url,
+      ed.time_zone,
+      ed.is_endorsement,
+      ed.is_withdrawal,
+      ed.is_ediit_entry,  
+      ed.limit_submission,
+      ed.submission_limit,
+      ed.event_logo,
+      ed.event_banner,
+      ed.event_description,
+      ae.id AS email_id,
+      ae.additonal_email AS email_address,  
+      it.id AS industry_type_id,
+      it.industry_type AS industry_type_name
     FROM event_details ed
     LEFT JOIN industry_types it ON ed.id = it.eventId
     LEFT JOIN additional_emails ae ON ed.id = ae.eventId
     WHERE ed.id = ?  
-    GROUP BY ed.id
-  `
+  `;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(selectSql, [event_id], (fetchError, results) => {
         if (fetchError) {
-          return reject(fetchError)
+          return reject(fetchError);
         }
+
         if (results.length > 0) {
-          const event = results[0]
+          const event = {
+            id: results[0].id,
+            event_name: results[0].event_name,
+            closing_date: results[0].closing_date,
+            closing_time: results[0].closing_time,
+            email: results[0].email,
+            event_url: results[0].event_url,
+            time_zone: results[0].time_zone,
+            is_endorsement: results[0].is_endorsement,
+            is_withdrawal: results[0].is_withdrawal,
+            is_ediit_entry: results[0].is_ediit_entry,
+            limit_submission: results[0].limit_submission,
+            submission_limit: results[0].submission_limit,
+            event_logo: results[0].event_logo,
+            event_banner: results[0].event_banner,
+            event_description: results[0].event_description,
+            additional_emails: [],
+            industry_types: []
+          };
 
-          if (event.industry_types) {
-            event.industry_types = event.industry_types.split(',')
-          } else {
-            event.industry_types = []
-          }
+          results.forEach(row => {
+            if (row.email_id && row.email_address) {
+              event.additional_emails.push({
+                email_id: row.email_id,
+                email_address: row.email_address
+              });
+            }
 
-          if (event.additional_emails) {
-            event.additional_emails = event.additional_emails.split(',')
-          } else {
-            event.additional_emails = []
-          }
+            if (row.industry_type_id && row.industry_type_name) {
+              event.industry_types.push({
+                industry_type_id: row.industry_type_id,
+                industry_type_name: row.industry_type_name
+              });
+            }
+          });
 
-          resolve(event)
+          resolve(event);
         } else {
-          reject(new Error(resposne.eventnotfound))
+          reject(new Error('Event not found'));
         }
-      })
-    })
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
+
+
 
 export const deleteIndustryTypes = async (eventId) => {
   return new Promise((resolve, reject) => {
@@ -1118,7 +1141,7 @@ export const updateEventSocial = (updates, eventId) => {
     db.query(checkEventQuery, [eventId], (err, result) => {
       if (err) return reject(err)
       if (result.length === 0) {
-        return reject(new Error(resposne.eventnotfound))
+        return reject(new Error('Event not found.'))
       }
 
       if (updates.imageFilename) {
@@ -1140,6 +1163,7 @@ export const updateEventSocial = (updates, eventId) => {
         updateFields.push('closing_messsage = ?')
         updateValues.push(updates.closing_messsage)
       }
+
       if (updates.jury_welcm_messsage) {
         updateFields.push('jury_welcm_messsage = ?')
         updateValues.push(updates.jury_welcm_messsage)
@@ -1151,12 +1175,13 @@ export const updateEventSocial = (updates, eventId) => {
       }
 
       if (updates.social !== undefined) {
-        const validSocialPlatforms = ['facebook', 'linkedin', 'twitter']
-        if (!validSocialPlatforms.includes(updates.social)) {
-          return reject(new Error(resposne.invalidSocialplatform))
+        if (Array.isArray(updates.social)) {
+          updateFields.push('social = ?')
+          updateValues.push(updates.social.join(','))
+        } else {
+          updateFields.push('social = ?')
+          updateValues.push(updates.social)
         }
-        updateFields.push('social = ?')
-        updateValues.push(updates.social)
       }
 
       if (updates.social_image) {
@@ -1165,9 +1190,9 @@ export const updateEventSocial = (updates, eventId) => {
       }
 
       if (updateFields.length === 0) {
-        return reject(new Error(resposne.noUpdateFieldProvided))
+        return reject(new Error('No update field provided.'))
       }
-
+ 
       const updateSql = `
         UPDATE event_details
         SET ${updateFields.join(', ')}
@@ -1176,23 +1201,25 @@ export const updateEventSocial = (updates, eventId) => {
 
       db.query(updateSql, [...updateValues, eventId], (error, result) => {
         if (error) {
-          return reject(new Error(resposne.dbUpdateFail))
+          console.log("db error:", error)
+          return reject(new Error('Database update failed.'))
         }
 
         if (result.affectedRows > 0) {
           resolve(true)
         } else {
-          reject(new Error(resposne.noaffectedRowwithId))
+          reject(new Error('No affected row found with this ID.'))
         }
       })
     })
   })
 }
 
-export async function addSubmissionId(id, submission_id) {
+
+export async function addSubmissionId(eventId, submission_id) {
 
   const updateSql = `UPDATE event_details SET submission_id = ? WHERE id = ?`
-  const values = [submission_id, id]
+  const values = [submission_id, eventId]
   try {
     const result = await new Promise((resolve, reject) => {
 
@@ -1217,10 +1244,10 @@ export async function addSubmissionId(id, submission_id) {
   }
 }
 
-export async function publiclyVisible(id, is_publicly_visble) {
+export async function publiclyVisible(eventId, is_publicly_visble) {
 
   const updateSql = `UPDATE event_details SET is_publicly_visble = ? WHERE id = ?`
-  const values = [is_publicly_visble, id]
+  const values = [is_publicly_visble, eventId]
   try {
     const result = await new Promise((resolve, reject) => {
 
@@ -2321,5 +2348,58 @@ INSERT INTO coupons (
     }
   } catch (error) {
     throw new Error(`Database error: ${error.message}`)
+  }
+}
+export function checkAwardId(awardId) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM awards_category WHERE id = ?"
+    db.query(query, [awardId], (err, results) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(results.length > 0 ? true : false)
+      }
+    })
+  })
+}
+
+export async function getAwardById(awardId) {
+  const selectSql = `
+        SELECT 
+        id,
+        eventId,
+        category_name, 
+        category_prefix, 
+        belongs_group, 
+        limit_submission, 
+        is_start_date, 
+        is_end_date, 
+        is_endorsement, 
+        start_date, 
+        end_date
+      FROM awards_category 
+      WHERE id = ?;
+
+  `;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(selectSql, [awardId], (fetchError, results) => {
+        if (fetchError) {
+          return reject(fetchError);
+        }
+
+        if (results.length > 0) {
+          return resolve(results[0]);
+        } else {
+          reject(new Error('Award not found'));
+        }
+        console.log("ressss", results)
+      });
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error(`Database error: ${error.message}`);
   }
 }

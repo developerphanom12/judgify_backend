@@ -6,6 +6,8 @@ import upload from '../middleware/multer.js'
 
 const router = express.Router()
 
+//------------------------------------------ admin login ----------------------------------------------//
+
 router.post('/register', validateAdmin, usercreate)//* --------  DONE
 
 router.post('/login', validateAdminLogin, loginseller)//* --------  DONE
@@ -18,33 +20,43 @@ router.post('/verifyOtp', validateVerifyOtp, verifyOTPHandler)//* --------  DONE
 
 router.post('/updateForgetPassword', validateupdateForgetPassword, updateforgetPassword)//* --------  DONE
 
-router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate) //cut  //!----changes will be apllied here by Avneet sir 
+router.get('/getEmail/:otpId', GetEmailForVerify)//~ -----delete this not used 
 
-router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)//* --------  DONE
+//------------------------------------------ profile Update ----------------------------------------------//
+
+router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
 router.get('/allAwards', authenticate,validatefilterCategory, Awardsget)//&--------- getting implemeted to the frontend
 
-router.get('/download', authenticate, exportCsv)//!-----------  to be done today
+router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
+
+//----------------------------------------- dashboard events ----------------------------------------------//
 
 router.get('/dashboardEvents', authenticate, dashboardEvents)//* --------  DONE
 
-router.post('/newPassword', authenticate, validateNewPass, NewPassword)//!-----------  to be done today
-
 router.get('/MyEvents', authenticate, MyEventsget)//* --------  DONE
 
-router.get('/OldAward', authenticate, SortByOldest)
+//----------------------------------------- Create Event ----------------------------------------------//
 
-router.get('/NewAward', authenticate, SortBynewest)
+router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate)//* --------  DONE
 
-router.get('/SearchEvent', SearchEvent)
+router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)//* --------  DONE
 
-router.post('/updateAwardCategory', authenticate, validateAwardCategoryUpdate, awardUpdate)
+router.get('/allAwards', authenticate, validatefilterCategory, Awardsget)//* --------  DONE 
 
-router.delete('/awards/:id', authenticate, deleteAward)
+router.get('/download', authenticate, exportCsv)//* --------  DONE
 
-router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)
+router.post('/updateAwardCategory', authenticate, validateAwardCategoryUpdate, awardUpdate)//* --------  DONE 
 
-router.get('/getEvent/:event_id', authenticate, MyEventget)
+router.delete('/awards/:id', authenticate, deleteAward)//* --------  DONE
+
+router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE 
+
+//----------------------------------------- Update Event ----------------------------------------------//
+
+router.get('/getEvent/:event_id', authenticate, MyEventget)//^-------------Second modal 
+
+router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//^-------------Second modal 
 
 router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)
 
@@ -52,27 +64,42 @@ router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, Sub
 
 router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)
 
+router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)
+
+//----------------------------------------- Manage Jury ----------------------------------------------//
+
 router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGeneralSettings)
+
+
+
+//----------------------------------------- draft to live or archive ----------------------------------------------//
 
 router.post('/toLive', authenticate, ValidateEventLive, EventLive)
 
 router.post('/toArchive', authenticate, ValidateEventArchive, EventArchive)
 
+//----------------------------------------- ScoreCard Create ----------------------------------------------//
+
 router.post('/scorecardCreate', authenticate, ValidateScoreCardCriteria, ScorecardCreate)
 
 router.post('/criteriaSettingCreate', authenticate, ValidateCriteriaSettingsCreate, CriteriaSettingCreate)
 
-router.delete('/deleteScoreCard/:id', authenticate, deleteScoreCard)
-
-router.post('/juryGroupCreate', authenticate, ValidateJuryGroupCreate, juryGroupCreate)
-
-router.post('/assignJury', authenticate, ValidateAssignJuryCreate, AssignJuryCreate)
+router.post('/settingsUpdate', authenticate, ValidateCriteriaSettingUpdate, CriteriaSettingUpdate)
 
 router.get('/getScorecard', authenticate, Scorecardget)
 
 router.post('/scoreCardUpdate', authenticate, ValidateScoreCardUpdate, ScorecardUpdate)
 
-router.post('/settingsUpdate', authenticate, ValidateCriteriaSettingUpdate, CriteriaSettingUpdate)
+router.delete('/deleteScoreCard/:id', authenticate, deleteScoreCard)
+
+
+//----------------------------------------- Jury group Create ----------------------------------------------//
+
+router.post('/assignJury', authenticate, ValidateAssignJuryCreate, AssignJuryCreate)
+
+router.get('/getJuryName', authenticate, JuryNameget)
+
+router.post('/juryGroupCreate', authenticate, ValidateJuryGroupCreate, juryGroupCreate)
 
 router.post('/juryGroupUpdate', authenticate, ValidateJuryGroupUpdate, juryGroupUpdate)
 
@@ -82,13 +109,4 @@ router.get('/getJuryGroups', authenticate, JuryGroupGet)
 
 router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 
-router.get('/getJuryName', authenticate, JuryNameget)
-
-router.get('/getEmail/:otpId', GetEmailForVerify)
-
-router.get('/getprofile', authenticate, AdminProfileget)//!-----------  to be done today
-
-router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)
-
-
-export default router   
+export default router

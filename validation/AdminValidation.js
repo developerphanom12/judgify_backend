@@ -277,7 +277,7 @@ export const validateEventCreate = (req, res, next) => {
       field: err.path[0],
       message: err.message,
     }));
-    
+
     return res.status(400).json({
       status: resposne.successFalse,
       message: 'Validation failed',
@@ -288,9 +288,8 @@ export const validateEventCreate = (req, res, next) => {
 };
 
 const awardCreate = Joi.object({
-  eventId: Joi.string().required().messages({
+  eventId: Joi.number().required().messages({
     "string.empty": "Event Id is not allowed to be empty",
-    "any.required": "Event Id is required",
   }),
   category_name: Joi.string().required().messages({
     "string.empty": "Category Name is not allowed to be empty",
@@ -308,11 +307,11 @@ const awardCreate = Joi.object({
     'number.base': 'Limit Submission must be a valid number',
     'any.required': 'Limit Submission is required',
   }),
-  is_start_date: Joi.number().valid(0, 1).required().messages({
+  is_start_date: Joi.number().valid(0, 1).optional().messages({
     'any.only': 'is Start Date must be either 0 or 1',
     'any.required': 'is Start Date field is required',
   }),
-  is_end_date: Joi.number().valid(0, 1).required().messages({
+  is_end_date: Joi.number().valid(0, 1).optional().messages({
     'any.only': 'is End Date must be either 0 or 1',
     'any.required': 'is End Date field is required',
   }),
@@ -320,11 +319,11 @@ const awardCreate = Joi.object({
     'any.only': 'Endorsement value must be either 0 or 1',
     'any.required': 'Endorsement value field is required',
   }),
-  start_date: Joi.string().messages({
+  start_date: Joi.string().optional().messages({
     'string.empty': "Start date cannot be empty",
     'string.Date': "Start date must be a valid date",
   }),
-  end_date: Joi.string().messages({
+  end_date: Joi.string().optional().messages({
     'string.empty': "End date cannot be empty",
     'string.Date': "End date must be a valid date",
   }),
@@ -384,11 +383,9 @@ const UpdateadminProfile = Joi.object({
 
   first_name: Joi.string().optional().messages({
     "string.empty": "First name is not allowed to be empty",
-    "any.required": "First name is required",
   }),
   last_name: Joi.string().optional().messages({
     "string.empty": "Last name is not allowed to be empty",
-    "any.required": "Last name is required",
   }),
   email: Joi.string()
     .email()
@@ -396,11 +393,9 @@ const UpdateadminProfile = Joi.object({
     .messages({
       'string.empty': 'Email is not allowed to be empty.',
       'string.email': 'Email must be a valid email address.',
-      'any.required': 'Email is required.'
     }),
   time_zone: Joi.string().optional().messages({
     "string.empty": "Time Zone is not allowed to be empty",
-    "any.required": "Time Zone is required",
   }),
   mobile_number: Joi.string()
     .length(10)
@@ -409,15 +404,12 @@ const UpdateadminProfile = Joi.object({
     .messages({
       'string.length': 'Mobile number must be exactly 10 digits long',
       'string.pattern.base': 'Mobile number must start with digits 6-9 and contain only digits',
-      'any.required': 'Mobile number is required',
     }),
   company: Joi.string().optional().messages({
     "string.empty": "Company is not allowed to be empty",
-    "any.required": "Company is required",
   }),
   job_title: Joi.string().optional().messages({
     "string.empty": "Job Title is not allowed to be empty",
-    "any.required": "Job Title  is required",
   }),
 
 })
@@ -438,45 +430,48 @@ export const validateAdminUpdateProfile = (req, res, next) => {
 
 const updateAwardCategory = Joi.object({
 
-  awardId: Joi.string().required().messages({
+  awardId: Joi.number().required().messages({
     "string.empty": "award ID is not allowed to be empty",
-    "any.required": "award ID is required"
   }),
-  category_name: Joi.string().required().messages({
+  category_name: Joi.string().optional().messages({
     "string.empty": "Category Name is not allowed to be empty",
-    "any.required": "Catgeory Name is required"
   }),
-  category_prefix: Joi.string().required().messages({
+  category_prefix: Joi.string().optional().messages({
     "string.empty": "Category Prefix is not allowed to be empty",
-    "any.required": "Category Prefix is required"
   }),
-  belongs_group: Joi.string().required().messages({
+  belongs_group: Joi.string().optional().messages({
     "string.empty": "Belongs Group is not allowed to be empty",
-    "any.required": "Belongs Group is required "
   }),
-  limit_submission: Joi.string().required().messages({
+  limit_submission: Joi.string().optional().messages({
     "string.empty": "Limit Submission is not allowed to be empty",
-    "any.required": "Limit Submission is required ."
   }),
-  is_start_date: Joi.number().valid(0, 1).required().messages({
-    'any.only': 'is Start Date must be either 0 or 1',
-    'any.required': 'is Start Date field is required',
-  }),
-  is_end_date: Joi.number().valid(0, 1).required().messages({
-    'any.only': 'is End Date must be either 0 or 1',
-    'any.required': 'is End Date field is required',
-  }),
-  is_endorsement: Joi.number().valid(0, 1).required().messages({
+  is_endorsement: Joi.number().valid(0, 1).optional().messages({
     "any.only": "isEndorsement must be either 0 or 1",
-    "any.required": "isendorsement field is required"
   }),
-  start_date: Joi.string().messages({
-    'string.empty': "Start date cannot be empty",
-    'string.Date': "Start date must be a valid date",
+  is_start_date: Joi.number().valid(0, 1).optional().messages({
+    'any.only': 'is Start Date must be either 0 or 1',
   }),
-  end_date: Joi.string().messages({
-    'string.empty': "End date cannot be empty",
-    'string.Date': "End date must be a valid date",
+  is_end_date: Joi.number().valid(0, 1).optional().messages({
+    'any.only': 'is End Date must be either 0 or 1',
+  }),
+
+  start_date: Joi.string().optional().when('is_start_date', {
+    is: 1,
+    then: Joi.required().messages({
+      'any.required': 'Start date is required when is_start_date is 1.',
+      'string.empty': "Start date cannot be empty",
+      'string.date': "Start date must be a valid date",
+    }),
+    otherwise: Joi.optional(),
+  }),
+  end_date: Joi.string().optional().when('is_end_date', {
+    is: 1,
+    then: Joi.required().messages({
+      'any.required': 'End date is required when is_end_date is 1.',
+      'string.empty': "End date cannot be empty",
+      'string.date': "End date must be a valid date",
+    }),
+    otherwise: Joi.optional(),
   }),
 })
 
@@ -495,38 +490,30 @@ export const validateAwardCategoryUpdate = (req, res, next) => {
 }
 
 const updateEventCreate = Joi.object({
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
-    "number.integer": "Event ID must be an integer",
-    "any.required": "Event ID is required"
   }),
-  event_name: Joi.string().required().messages({
+  event_name: Joi.string().optional().messages({
     "string.empty": "Event name is not allowed to be empty",
-    "any.required": "Event name is required"
   }),
-  closing_date: Joi.string().required().messages({
+  closing_date: Joi.string().optional().messages({
     "string.empty": "Closing date is not allowed to be empty",
-    "any.required": "Closing date is required"
   }),
-  closing_time: Joi.string().required().messages({
+  closing_time: Joi.string().optional().messages({
     "string.empty": "Closing time is not allowed to be empty",
-    "any.required": "Closing time is required"
   }),
   email: Joi.string()
     .email()
-    .required()
+    .optional()
     .messages({
       "string.empty": "Email is not allowed to be empty",
       "string.email": "Email must be a valid email address",
-      "any.required": "Email is required"
     }),
-  event_url: Joi.string().required().messages({
+  event_url: Joi.string().optional().messages({
     "string.empty": "Event URL is not allowed to be empty",
-    "any.required": "Event URL is required"
   }),
-  time_zone: Joi.string().required().messages({
+  time_zone: Joi.string().optional().messages({
     "string.empty": "TimeZone is not allowed to be empty",
-    "any.required": "TimeZone is required"
   }),
   additional_email: Joi.array()
     .items(Joi.string().email().messages({
@@ -573,14 +560,9 @@ export const validateUpdateEventCreate = (req, res, next) => {
 
 const eventupdateSocial = Joi.object({
   eventId: Joi.number()
-    .integer()
-    .positive()
     .required()
     .messages({
       'number.base': 'Event ID must be a valid number',
-      'number.integer': 'Event ID must be an integer',
-      'number.positive': 'Event ID must be a positive integer',
-      'any.required': 'Event ID is required',
     }),
 
   event_description: Joi.string()
@@ -607,14 +589,14 @@ const eventupdateSocial = Joi.object({
       'number.base': 'Is social must be a number (0 or 1)',
       'any.only': 'Is social must be either 0 or 1',
     }),
-  social: Joi.string()
-    .valid('facebook', 'linkedin', 'twitter')
+  social: Joi.array()
+    .items(Joi.string().valid('facebook', 'linkedin', 'twitter'))
     .optional()
     .messages({
-      'string.base': 'Social must be a valid string',
-      'any.only': 'Social must be one of the following values: facebook, linkedin, twitter',
+      'array.base': 'Social must be an array of valid strings',
+      'string.base': 'Each social platform must be a valid string',
+      'any.only': 'Each social platform must be one of the following values: facebook, linkedin, twitter',
     }),
-
   event_logo: Joi.any()
     .optional()
     .messages({
@@ -647,11 +629,12 @@ export const validateUpdateEventSocial = (req, res, next) => {
 }
 
 const CreateSubmissionID = Joi.object({
-  id: Joi.number().integer().required().messages({
-    "number.base": "ID must be a number",
-    "number.integer": "ID must be an integer",
-    "any.required": "ID is required"
-  }),
+  eventId: Joi.number()
+    .required()
+    .messages({
+      'number.base': 'Event ID must be a valid number',
+      "any.required": "Event ID is required"
+    }),
   submission_id: Joi.string().required().messages({
     "string.base": "Submission ID must be a string",
     "any.required": "Submission ID is required"
@@ -670,10 +653,9 @@ export const ValidateSubmissionIDformat = (req, res, next) => {
 }
 
 const awardDirectory = Joi.object({
-  id: Joi.number().integer().required().messages({
-    "number.base": "ID must be a number",
-    "number.integer": "ID must be an integer",
-    "any.required": "ID is required"
+  eventId: Joi.number().required().messages({
+    "number.base": "Event ID must be a number",
+    "any.required": "Event ID is required"
   }),
   is_publicly_visble: Joi.number().valid(0, 1).messages({
     'any.only': 'Value must be either 0 or 1',
@@ -692,10 +674,9 @@ export const ValidateAwardDirectory = (req, res, next) => {
 }
 
 const general_settings = Joi.object({
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
     "number.integer": "Event ID must be an integer",
-    "any.required": "Event ID is required"
   }),
   start_date: Joi.string().isoDate().optional().messages({
     "string.base": "Start date must be a valid date string",
@@ -755,9 +736,8 @@ export const ValidategeneralSettings = (req, res, next) => {
 }
 
 const liveEvent = Joi.object({
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "ID must be a number",
-    "number.integer": "ID must be an integer",
     "any.required": "ID is required"
   }),
   is_live: Joi.number().valid(0, 1).messages({
@@ -777,9 +757,8 @@ export const ValidateEventLive = (req, res, next) => {
 }
 
 const ArchiveEvent = Joi.object({
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "ID must be a number",
-    "number.integer": "ID must be an integer",
     "any.required": "ID is required"
   }),
   is_archive: Joi.number().valid(0, 1).messages({
@@ -799,9 +778,8 @@ export const ValidateEventArchive = (req, res, next) => {
 }
 
 const scorecardCritera = Joi.object({
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
-    "number.integer": "Event ID must be an integer",
     "any.required": "Event ID is required"
   }),
   criteria: Joi.array().items(
@@ -841,14 +819,12 @@ export const ValidateScoreCardCriteria = (req, res, next) => {
 
 const CriteriaSettingsCreate = Joi.object({
 
-  criteriaId: Joi.number().integer().required().messages({
+  criteriaId: Joi.number().required().messages({
     "number.base": "Criteria ID must be a number",
-    "number.integer": "Criteria ID must be an integer",
     "any.required": "Criteria ID is required"
   }),
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
-    "number.integer": "Event ID must be an integer",
     "any.required": "Event ID is required"
   }),
   criteria_type: Joi.string().optional().messages({
@@ -887,11 +863,9 @@ export const ValidateCriteriaSettingsCreate = (req, res, next) => {
 
 const juryGroupSchema = Joi.object({
   eventId: Joi.number()
-    .integer()
     .required()
     .messages({
       'number.base': 'Event ID must be a number.',
-      'number.integer': 'Event ID must be an integer.',
       'any.required': 'Event ID is required.',
     }),
 
@@ -958,8 +932,8 @@ export const ValidateJuryGroupCreate = (req, res, next) => {
 
 
 const assignJurySchema = Joi.object({
-  eventId: Joi.string().required().messages({
-    'string.base': 'Event ID must be a string.',
+  eventId: Joi.number().required().messages({
+    'number.base': 'Event ID must be a number.',
     'string.empty': 'Event ID is required.',
     'any.required': 'Event ID is required.'
   }),
@@ -1020,36 +994,35 @@ export const ValidateAssignJuryCreate = (req, res, next) => {
 }
 
 const scorecardCriteriaUpdate = Joi.object({
-  eventId: Joi.number().integer().required().messages({
+  eventId: Joi.number().required().messages({
     "number.base": "Event ID must be a number",
     "number.integer": "Event ID must be an integer",
-    "any.required": "Event ID is required"
   }),
   criteria: Joi.array().items(
     Joi.object({
-      id: Joi.number().integer().required().messages({
+      id: Joi.number().integer().optional().messages({
         "number.base": "Criteria ID must be a number",
         "number.integer": "Criteria ID must be an integer",
         "any.required": "Criteria ID is required"
       }),
-      title: Joi.string().required().messages({
+      title: Joi.string().optional().messages({
         "string.empty": "Criteria Title is not allowed to be empty",
         "any.required": "Criteria Title is required",
       }),
-      description: Joi.string().required().messages({
+      description: Joi.string().optional().messages({
         "string.empty": "Description is not allowed to be empty",
         "any.required": "Description is required",
       })
     })
-  ).required().messages({
+  ).optional().messages({
     "array.base": "Criteria must be an array",
     "any.required": "Criteria is required",
   }),
-  overall_scorecard: Joi.array().items(Joi.number().required().messages({
+  overall_scorecard: Joi.array().items(Joi.number().optional().messages({
     "number.base": "Overall ScoreCard Value must be a number",
     "number.empty": "Overall ScoreCard Value cannot be empty",
     "any.required": "Overall ScoreCard Value is required",
-  })).required().messages({
+  })).optional().messages({
     "array.base": "Overall ScoreCard Value must be an array",
     "any.required": "Overall ScoreCard Value is required",
   }),
@@ -1072,13 +1045,13 @@ export const ValidateScoreCardUpdate = (req, res, next) => {
 };
 
 const criteriaSettingUpdate = Joi.object({
-  criteriaId: Joi.string().required().messages({
-    'string.base': `"criteriaId" should be a type of 'text'`,
+  criteriaId: Joi.number().required().messages({
+    'string.base': `"criteriaId" should be a type of id`,
     'string.empty': `"criteriaId" cannot be an empty field`,
     'any.required': `"criteriaId" is a required field`
   }),
-  eventId: Joi.string().required().messages({
-    'string.base': `"eventId" should be a type of 'text'`,
+  eventId: Joi.number().required().messages({
+    'string.base': `"eventId" should be a type of Id`,
     'string.empty': `"eventId" cannot be an empty field`,
     'any.required': `"eventId" is a required field`
   }),
@@ -1124,7 +1097,6 @@ export const ValidateCriteriaSettingUpdate = (req, res, next) => {
 
 const juryGroupUpdate = Joi.object({
   eventId: Joi.number()
-    .integer()
     .required()
     .messages({
       'number.base': 'Event ID must be a number.',
@@ -1143,11 +1115,10 @@ const juryGroupUpdate = Joi.object({
 
   group_name: Joi.string()
     .max(255)
-    .required()
+    .optional()
     .messages({
       'string.base': 'Group name must be a string.',
       'string.max': 'Group name must be less than or equal to 255 characters.',
-      'any.required': 'Group name is required.',
     }),
 
   filtering_pattern: Joi.string()
@@ -1161,20 +1132,18 @@ const juryGroupUpdate = Joi.object({
       Joi.object({
         id: Joi.number()
           .integer()
-          .required()
+          .optional()
           .messages({
             'number.base': 'Criteria ID must be a number.',
             'number.integer': 'Criteria ID must be an integer.',
-            'any.required': 'Criteria ID is required.',
           }),
 
         category: Joi.string()
           .max(255)
-          .required()
+          .optional()
           .messages({
             'string.base': 'Category must be a string.',
             'string.max': 'Category must be less than or equal to 255 characters.',
-            'any.required': 'Category is required.',
           }),
 
         isValue: Joi.string()
@@ -1184,7 +1153,7 @@ const juryGroupUpdate = Joi.object({
           }),
       })
     )
-    .required()
+    .optional()
     .messages({
       'array.base': 'Filtering criteria must be an array.',
       'any.required': 'Filtering criteria is required.',
@@ -1192,7 +1161,7 @@ const juryGroupUpdate = Joi.object({
 
   category: Joi.array()
     .items(Joi.string().max(255))
-    .required()
+    .optional()
     .messages({
       'array.base': 'Categories must be an array.',
       'string.base': 'Each category must be a string.',
@@ -1214,7 +1183,6 @@ export const ValidateJuryGroupUpdate = (req, res, next) => {
 
 const couponCreate = Joi.object({
   eventId: Joi.number()
-    .integer()
     .required()
     .messages({
       'number.base': 'Event ID must be a number.',
@@ -1262,29 +1230,22 @@ export const ValidateCouponCreate = (req, res, next) => {
   next();
 };
 
-
-
-
 const filterCategory = Joi.object({
-  eventId: Joi.string().required().messages({
-    "string.empty": "Event Id is not allowed to be empty",
+  eventId: Joi.number().required().messages({
     "any.required": "Event Id is required",
     "any.empty": "Event Id is not allowed to be empty",
-
   }),
-  sortOrder: Joi.valid('oldest','newest').optional().messages({
-    "string.empty": "Event Id is not allowed to be empty",
-    "any.empty": "Event Id is not allowed to be empty",
+  sortOrder: Joi.valid('oldest', 'newest').optional().messages({
+    "string.empty": "Sort Order is not allowed to be empty",
+    "any.empty": "Sort Order is not allowed to be empty",
 
   }),
   search: Joi.string().optional().messages({
     "string.empty": "search is not allowed to be empty",
     "any.empty": "search is not allowed to be empty",
-
   }),
- 
- 
 })
+
 
 export const validatefilterCategory = (req, res, next) => {
   const { error } = filterCategory.validate(req.query)

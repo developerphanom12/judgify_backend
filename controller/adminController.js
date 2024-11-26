@@ -14,9 +14,6 @@ import {
   getEventDashboard,
   getMyEvents,
   loginAdmin,
-  searchEvent,
-  sortbynewest,
-  sortbyoldest,
   storeOTP,
   updateprofile,
   verifyOTP,
@@ -34,14 +31,12 @@ import {
   publiclyVisible,
   generalSettings,
   overall_score,
-  StartEndUpdate,
   liveEvent,
   archiveEvent,
   CreateScorecardCriteria,
   overallScorecardValue,
   CreateCriteriaSettingValues,
   criteriaSettings,
-  additional_emails,
   updateAdditionalEmails,
   deleteAdditionalEmails,
   CreateJuryGroup,
@@ -74,6 +69,12 @@ import {
   getAdminProfile,
   createCoupon,
   checkAdmin,
+  checkeventEmail,
+  additional_emailssss,
+  getAwardById,
+  checkAwardId,
+  EmptyStartDate,
+  EmptyEndDate,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -179,6 +180,7 @@ export const updateProfile = async (req, res) => {
   }
   const { first_name, last_name, email, company, mobile_number, time_zone, job_title } = req.body
   const profile_image = req.file
+
 
   try {
 
@@ -348,21 +350,21 @@ export const updateforgetPassword = async (req, res) => {
 }
 
 export const eventCreate = async (req, res) => {
-  const role = req.user.role
+  const role = req.user.role;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
-  const adminId = req.user.id
-  const adminExists = await checkAdmin(adminId)
+  const adminId = req.user.id;
+  const adminExists = await checkAdmin(adminId);
   if (!adminExists) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: "No admin Id found or Admin does not exist",
-    })
+    });
   }
   const {
 
@@ -380,30 +382,29 @@ export const eventCreate = async (req, res) => {
     event_description,
     industry_type,
     additional_email,
-  } = req.body
+  } = req.body;
 
+  const checkEmail = await checkeventEmail(email)
+  if (checkEmail) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: "email already exist."
+    })
+  }
   try {
-
-
-    if (Array.isArray(additional_email) && additional_email.includes(email)) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.diffrentemail,
-      })
-    }
 
     if (limit_submission === 1 && (submission_limit === undefined || submission_limit < 1)) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.submissionlimit,
-      })
+        message: resposne.submisionlimit
+      });
     }
 
-    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null
-    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null
+    const logo = req.files["event_logo"] ? req.files["event_logo"][0].filename : null;
+    const banner = req.files["event_banner"] ? req.files["event_banner"][0].filename : null;
 
     if (!logo && !banner) {
-      console.warn('Both logo and banner are not provided.')
+      console.warn('Both logo and banner are not provided.');
     }
 
     const eventResult = await createEvent(
@@ -422,25 +423,37 @@ export const eventCreate = async (req, res) => {
       logo,
       banner,
       event_description
-    )
+    );
+    const emailcreate = await additional_emailssss(eventResult.id, additional_email)
+    if (emailcreate.error) {
+      return res.status(400).json({
+        status: false,
+        message: "failed to create additional email"
+      })
+    }
 
-    const industryPromises = industry_type.map(industry => industry_types(eventResult.id, industry))
-    const additionalEmailPromises = additional_email.map(email => additional_emails(eventResult.id, email))
+    const indstrycreate = await industry_types(eventResult.id, industry_type)
+    if (indstrycreate.error) {
+      return res.status(400).json({
+        status: false,
+        message: "error.message"
+      })
+    }
 
-    // Await both the industry and additional email promises
-    await Promise.all([...industryPromises, ...additionalEmailPromises])
 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: resposne.createvent,
-    })
+      message: "resposne.createvent",
+      eventId: eventResult.id
+    });
   } catch (error) {
+    console.log("erro creating event", error)
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
 
 
 export const awardCreate = async (req, res) => {
@@ -511,6 +524,7 @@ export const awardCreate = async (req, res) => {
       return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.awardcreate,
+        awardId: result.id
       })
     }
   } catch (error) {
@@ -532,11 +546,11 @@ export const Awardsget = async (req, res) => {
   }
 
   const { eventId, search, sortOrder } = req.query;
-
+  const searchTerm = search && search.trim() !== '' ? search : null;
   const order = sortOrder === 'oldest' ? 'oldest' : 'newest';
 
   try {
-    const result = await getAwards(eventId, search, order);
+    const result = await getAwards(eventId, searchTerm, order);
 
     if (result.length > 0) {
       return res.status(200).json({
@@ -579,11 +593,15 @@ export const exportCsv = async (req, res) => {
     });
   }
 
+
   try {
+    // console.log('Event ID:', eventId);
     // console.log('Event ID:', eventId);
 
     const sheet = await exportToExcel(eventId);
 
+
+    fs.writeFileSync(filePath, sheet);
     const filePath = path.join(directoryPath, 'Awards Category.xlsx');
 
     fs.writeFileSync(filePath, sheet);
@@ -593,7 +611,9 @@ export const exportCsv = async (req, res) => {
       message: resposne.downloadSuccess,
       path: filePath,
     });
+     
   } catch (error) {
+    // console.error('Error exporting to Excel:', error);
     // console.error('Error exporting to Excel:', error);
     res.status(400).send({
       status: resposne.successFalse,
@@ -602,38 +622,48 @@ export const exportCsv = async (req, res) => {
   }
 };
 export const dashboardEvents = async (req, res) => {
-  const role = req.user.role
-  const id = req.user.id
-  // console.log("id", id, role)
+  const role = req.user.role;
+  const id = req.user.id;
+
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
+  const { skip, limit, sortOrder } = req.query;
+
+  console.log("Query Params:", req.query);
+
+  const validSortOrders = ['newest', 'oldest'];
+  const order = validSortOrders.includes(sortOrder) ? sortOrder : 'newest';
 
   try {
-    const result = await getEventDashboard(id)
+    const parsedSkip = parseInt(skip, 10) || 0;
+    const parsedLimit = parseInt(limit, 10) || 8;
+
+    const result = await getEventDashboard(parsedSkip, parsedLimit, id, order);
+
     if (result.length > 0) {
-      res.status(200).json({
+      return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result,
-      })
+      });
     } else {
-      res.status(400).json({
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      })
+      });
     }
   } catch (error) {
-    res.status(400).json({
+    // console.error("Error fetching dashboard events:", error);
+    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
-
+};
 
 export const NewPassword = async (req, res) => {
   const role = req.user.role
@@ -644,7 +674,7 @@ export const NewPassword = async (req, res) => {
       message: resposne.unauth,
     })
   }
-
+  const search = req.query
   const userId = req.user.id
   const { currentPassword, newPassword } = req.body
 
@@ -657,7 +687,7 @@ export const NewPassword = async (req, res) => {
   }
 
   try {
-    const result = await newPasswordd({ userId, currentPassword, newPassword })
+    const result = await newPasswordd({ userId, search, currentPassword, newPassword })
     if (result.error) {
       return res.status(400).json({
         status: resposne.successFalse,
@@ -678,135 +708,59 @@ export const NewPassword = async (req, res) => {
 }
 
 export const MyEventsget = async (req, res) => {
-  const role = req.user.role
-  const id = req.user.id
+  const role = req.user.role;
+  const id = req.user.id;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
-  const { skip, limit } = req.query
+
+  const { skip, limit, order } = req.query;
+
+  // console.log("Query Params:", req.query); 
+
+  const sortOrder = order === 'newest' ? 'oldest' : 'newest';
+
+  // console.log("Sort order:", sortOrder);  
+
   try {
-    const parsedSkip = parseInt(skip, 8) || 0
-    const parsedLimit = parseInt(limit, 8) || 8
-    const result = await getMyEvents(parsedSkip,
-      parsedLimit, id)
-    if (result.length === 0) {
-      res.status(400).json({
+    const parsedSkip = parseInt(skip, 10) || 0;
+    const parsedLimit = parseInt(limit, 10) || 8;
+
+    const result = await getMyEvents(parsedSkip, parsedLimit, id, sortOrder);
+
+    if (result.totalCount === 0) {
+      return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.nodatavail,
-      })
+      });
     } else {
-      res.status(200).json({ 
+      return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.fetchSuccess,
         data: result,
-      })
+      });
     }
   } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
-
-export const SortByOldest = async (req, res) => {
-  const role = req.user.role
-
-  if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: resposne.unauth,
-    })
-  }
-  try {
-    const result = await sortbyoldest()
-    if (result.length > 0) {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.fetchSuccess,
-        data: result,
-      })
-    } else {
-      res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-  } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
 
-export const SortBynewest = async (req, res) => {
-  const role = req.user.role
-
-  if (role !== "admin") {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.unauth,
-    })
-  }
-  try {
-    const result = await sortbynewest()
-    if (result.length > 0) {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.fetchSuccess,
-        data: result,
-      })
-    } else {
-      res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-  } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
-
-export const SearchEvent = async (req, res) => {
-  try {
-    const { search } = req.query
-    const result = await searchEvent(search)
-    if (result.length > 0) {
-      res.status(200).json({
-        status: resposne.successTrue,
-        message: resposne.fetchSuccess,
-        data: result,
-      })
-    } else {
-      res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-  } catch (error) {
-    res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
 
 export const awardUpdate = async (req, res) => {
-  const { role } = req.user
+  const { role } = req.user;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth,
-    })
+    });
   }
   const {
     awardId,
@@ -819,54 +773,59 @@ export const awardUpdate = async (req, res) => {
     is_endorsement,
     start_date,
     end_date
-  } = req.body
+  } = req.body;
 
-  if (is_start_date === 1 && (!start_date || start_date < 1)) {
+  const updates = {};
+
+  if (category_name) updates.category_name = category_name;
+  if (category_prefix) updates.category_prefix = category_prefix;
+  if (belongs_group) updates.belongs_group = belongs_group;
+  if (limit_submission !== undefined) updates.limit_submission = limit_submission;
+  if (is_start_date !== undefined) updates.is_start_date = is_start_date;
+  if (is_end_date !== undefined) updates.is_end_date = is_end_date;
+  if (is_endorsement !== undefined) updates.is_endorsement = is_endorsement;
+  if (start_date !== undefined) updates.start_date = start_date;
+  if (end_date !== undefined) updates.end_date = end_date;
+
+  if (Object.keys(updates).length === 0) {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: resposne.is_start_REquired,
-    })
-  }
-
-  if (is_end_date === 1 && (!end_date || end_date < 1)) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.is_end_REquired,
-    })
+      message: resposne.noupdate,
+    });
   }
 
   try {
-    const result = await updateAward(
-      awardId,
-      category_name,
-      category_prefix,
-      belongs_group,
-      limit_submission,
-      is_start_date,
-      is_end_date,
-      is_endorsement,
-      start_date,
-      end_date
-    )
+
+    if (is_start_date === 0) {
+      await EmptyStartDate(awardId);
+    }
+
+    if (is_end_date === 0) {
+      await EmptyEndDate(awardId);
+    }
+
+    const result = await updateAward(awardId, updates);
 
     if (result.message) {
       return res.status(200).json({
         status: resposne.successTrue,
         message: resposne.awardUpdateSuccess,
-      })
+      });
     } else {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.awardUpdateFail,
-      })
+      });
     }
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
-    })
+    });
   }
-}
+};
+
+
 
 export const deleteAward = async (req, res) => {
   const { role } = req.user
@@ -1117,9 +1076,9 @@ export const SubmissionFormatCreate = async (req, res) => {
     })
   }
 
-  const { id, submission_id } = req.body
+  const { eventId, submission_id } = req.body
 
-  const eventIdCheck = await checkeventId(id)
+  const eventIdCheck = await checkeventId(eventId)
 
   if (!eventIdCheck) {
     return res.status(400).json({
@@ -1129,7 +1088,7 @@ export const SubmissionFormatCreate = async (req, res) => {
   }
 
   try {
-    const result = await addSubmissionId(id, submission_id)
+    const result = await addSubmissionId(eventId, submission_id)
 
     if (result.affectedRows === 0) {
       return res.status(400).json({
@@ -1160,9 +1119,9 @@ export const visiblePublicly = async (req, res) => {
     })
   }
 
-  const { id, is_publicly_visble } = req.body
+  const { eventId, is_publicly_visble } = req.body
 
-  const eventIdCheck = await checkeventId(id)
+  const eventIdCheck = await checkeventId(eventId)
 
   if (!eventIdCheck) {
     return res.status(400).json({
@@ -1172,7 +1131,7 @@ export const visiblePublicly = async (req, res) => {
   }
 
   try {
-    const result = await publiclyVisible(id, is_publicly_visble)
+    const result = await publiclyVisible(eventId, is_publicly_visble)
 
     if (result.affectedRows === 0) {
       return res.status(400).json({
@@ -2208,6 +2167,58 @@ export const CreateCoupon = async (req, res) => {
     }
   } catch (error) {
     return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
+
+export const AwardByIdget = async (req, res) => {
+  const role = req.user.role
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    })
+  }
+
+  const { awardId } = req.params
+
+  const isDeleted = await checkifDeleted(awardId)
+
+  if (isDeleted) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.awardDeleted,
+    })
+  }
+
+  const awardIdCheck = await checkAwardId(awardId)
+  if (!awardIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: "no award id found",
+    })
+  }
+
+  try {
+    const result = await getAwardById(awardId)
+
+    if (!result) {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      })
+    } else {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      })
+    }
+  } catch (error) {
+    res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
     })
