@@ -627,14 +627,14 @@ export const dashboardEvents = async (req, res) => {
   }
   const { skip, limit, sortOrder } = req.query;
 
-  console.log("Query Params:", req.query);
+  // console.log("Query Params:", req.query);
 
   const validSortOrders = ['newest', 'oldest'];
   const order = validSortOrders.includes(sortOrder) ? sortOrder : 'newest';
 
   try {
     const parsedSkip = parseInt(skip, 10) || 0;
-    const parsedLimit = parseInt(limit, 10) || 8;
+    const parsedLimit = parseInt(limit, 100) ||100;
 
     const result = await getEventDashboard(parsedSkip, parsedLimit, id, order);
 

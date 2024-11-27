@@ -242,6 +242,38 @@ export async function changePassword({ email, password }) {
   });
 }
 
+export async function changeforgetPassword({ email, newPassword }) {
+  return new Promise((resolve, reject) => {
+    const selectSql =
+      "SELECT * FROM user_otp WHERE email = ? AND is_verified = 1"
+    const updateSql = "UPDATE user SET password = ? WHERE email = ?"
+
+    db.query(selectSql, [email], async (error, results) => {
+      if (error) {
+        return reject(error)
+      }
+
+      if (results.length === 0) {
+        return reject(new Error(resposne.otpnotverified))
+      }
+
+      try {
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+
+        db.query(updateSql, [hashedPassword, email], (updateError) => {
+          if (updateError) {
+            return reject(updateError)
+          }
+
+          resolve(resposne.passChanged)
+        })
+      } catch (hashError) {
+        reject(hashError)
+      }
+    })
+  })
+}
+
 export function checkeventId(eventId) {
   return new Promise((resolve, reject) => {
     const query = "SELECT * FROM event_details WHERE id = ?"

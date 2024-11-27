@@ -1,8 +1,8 @@
 const saltRounds = 10
 import bcrypt from "bcrypt"
 import resposne from "../middleware/resposne.js"
-import { changePassword, checkemail, checkemailOtp, checkphone, generateOTP, getCouponCodes, loginUser, storeOTP, userRegister, verifyOTP } from "../service/userService.js"
-import sendGmail from "../mails/mail.js"
+import { changeforgetPassword, changePassword, checkemail, checkemailOtp, checkphone, generateOTP, getCouponCodes, loginUser, storeOTP, userRegister, verifyOTP } from "../service/userService.js"
+import sendGmail from "../mails/createUsermail.js"
 
 export const usercreate = async (req, res) => {
     const { first_name, last_name, email, password, company, mobile_number, country } = req.body
@@ -28,24 +28,29 @@ export const usercreate = async (req, res) => {
         const userid = await userRegister(
             first_name, last_name, email, hashedPassword, company, mobile_number, country
         )
+        if (userid.error) {
+            return res.status(400).json({
+                status: resposne.successFalse,
+                message: userid.error
+            })
+        }
 
         try {
             const emailResult = await sendGmail(first_name, last_name, email, company, mobile_number, country)
+            console.log("emailResult", emailResult)
             return res.status(200).json({
                 status: true,
                 message: resposne.usercreate,
-                data: userid,
                 emailMessage: emailResult
             })
         } catch (emailError) {
-            console.error('Email Error:', emailError.message)
             return res.status(200).json({
                 status: true,
-                message: resposne.usercreateEmailFail,
-                data: userid,
-                emailError: emailError.message
+                message: emailError.message,
+                // emailError: emailError.message
             })
         }
+
     } catch (error) {
         return res.status(400).json({
             status: resposne.successFalse,
@@ -85,7 +90,7 @@ export const loginuser = async (req, res) => {
         // console.error("Error during login:", error)
         return res.status(400).json({
             status: resposne.successFalse,
-            message: error.message || 'An unexpected error occurred',
+            message: error.message,
         })
     }
 }
@@ -192,6 +197,47 @@ export const updatePassword = async (req, res) => {
     }
 }
 
+export const updateforgetPassword = async (req, res) => {
+    const { email, newPassword, confirmPassword } = req.body
+
+    const emailExists = await checkemailOtp(email)
+    if (!emailExists) {
+        return res.status(400).json({
+            status: resposne.successFalse,
+            message: resposne.otpnotverified,
+        })
+    }
+
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+            status: resposne.successFalse,
+            message: resposne.newPass,
+        })
+    }
+
+    try {
+        const result = await changeforgetPassword({ email, newPassword })
+
+        if (result.length === 0) {
+            return res.status(400).json({
+                status: resposne.successFalse,
+                message: resposne.errorchangePass,
+            })
+        } else {
+            return res.status(200).json({
+                status: resposne.successTrue,
+                message: resposne.passupdateSuccess,
+            })
+        }
+
+    } catch (error) {
+        return res.status(400).json({
+            status: resposne.successFalse,
+            message: error.message,
+        })
+    }
+}
+
 export const CouponCodesget = async (req, res) => {
 
     const role = req.user.role
@@ -203,13 +249,13 @@ export const CouponCodesget = async (req, res) => {
         })
     }
     const eventId = req.params.id
-    
+
     const eventIdCheck = await checkeventId(eventId)
     if (!eventIdCheck) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.eventIdfail,
-      })
+        return res.status(400).json({
+            status: resposne.successFalse,
+            message: resposne.eventIdfail,
+        })
     }
     try {
 

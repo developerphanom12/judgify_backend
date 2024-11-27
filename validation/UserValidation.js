@@ -152,3 +152,48 @@ export const validateVerifyOtp = (req, res, next) => {
 
     next();
 };
+
+const forgetPassword = Joi.object({
+    email: Joi.string()
+      .email()
+      .required()
+      .messages({
+        'string.empty': 'Email is not allowed to be empty.',
+        'string.email': 'Email must be a valid email address.',
+        'any.required': 'Email is required.'
+      }),
+    newPassword: Joi.string()
+      .required()
+      .min(8)
+      .max(16)
+      .messages({
+        "string.empty": "New Password Cannot be empty",
+        "string.min": "New Password be Atleast 8 Characters Long",
+        "string.max": "New Password should be less than 16 Characters",
+        "any.required": "New Password is Required."
+      }),
+    confirmPassword: Joi.string()
+      .required()
+      .min(8)
+      .max(16)
+      .messages({
+        "string.empty": "Confirm Password Cannot be empty",
+        "string.min": "Confirm Password should be atleast 8 Characters Long",
+        "string.max": "Confirm PAssword Should be Less than 16 Characters Long.",
+        "any.required": "Confirm Password is Required."
+      }),
+  })
+  
+  export const validateupdateForgetPassword = (req, res, next) => {
+    const { error } = forgetPassword.validate(req.body)
+  
+    if (error) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: error.details[0].message
+      })
+    }
+  
+    next()
+  }
+  
