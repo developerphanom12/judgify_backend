@@ -274,6 +274,7 @@ export async function changeforgetPassword({ email, newPassword }) {
   })
 }
 
+
 export function checkeventId(eventId) {
   return new Promise((resolve, reject) => {
     const query = "SELECT * FROM event_details WHERE id = ?"

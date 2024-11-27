@@ -1,6 +1,6 @@
 import express from "express"
 import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, CreateGeneralSettings, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv, GetEmailForVerify, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, sendOTP, SubmissionFormatCreate, updateforgetPassword, updateProfile, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
-import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory, validateAdminUpdateProfile, validateUpdateEventCreate, validateUpdateEventSocial } from '../validation/AdminValidation.js'
+import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory } from '../validation/AdminValidation.js'
 import authenticate from '../middleware/authentication.js'
 import upload from '../middleware/multer.js'
 
@@ -11,6 +11,8 @@ const router = express.Router()
 router.post('/register', validateAdmin, usercreate)//* --------  DONE
 
 router.post('/login', validateAdminLogin, loginseller)//* --------  DONE
+
+router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//!-----------   to be done today 
 
 router.post('/send_otp', validateotp, sendOTP)//* --------  DONE
 
@@ -24,7 +26,7 @@ router.get('/getEmail/:otpId', GetEmailForVerify)//~ -----delete this not used
 
 router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'), validateAdminUpdateProfile, updateProfile)//* --------  DONE 
+router.get('/allAwards', authenticate,validatefilterCategory, Awardsget)//&--------- getting implemeted to the frontend
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
 
