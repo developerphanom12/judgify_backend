@@ -125,76 +125,76 @@ export function generateOTP() {
 export function storeOTP(email, otp) {
   return new Promise((resolve, reject) => {
     const deleteSql = `
-        DELETE FROM user_otp WHERE email = ?
-      `;
+      DELETE FROM user_otp WHERE email = ?
+    `
     const insertSql = `
-        INSERT INTO user_otp (email, otp)
-        VALUES (?, ?)
-      `;
+      INSERT INTO user_otp (email, otp)
+      VALUES (?, ?)
+    `
     db.beginTransaction((err) => {
       if (err) {
-        return reject(err);
+        return reject(err)
       }
 
       db.query(deleteSql, [email], (error) => {
         if (error) {
           return db.rollback(() => {
-            reject(error);
-          });
+            reject(error)
+          })
         }
 
         db.query(insertSql, [email, otp], (error, result) => {
           if (error) {
             return db.rollback(() => {
-              reject(error);
-            });
+              reject(error)
+            })
           }
 
           db.commit((err) => {
             if (err) {
               return db.rollback(() => {
-                reject(err);
-              });
+                reject(err)
+              })
             }
 
-            const successMessage = "OTP sent successfully";
-            resolve(successMessage);
-          });
-        });
-      });
-    });
-  });
+            const successMessage = resposne.otpsend
+            resolve(successMessage)
+          })
+        })
+      })
+    })
+  })
 }
 
 export function verifyOTP(email, otp) {
   return new Promise((resolve, reject) => {
     const selectSql = `
-        SELECT * FROM user_otp WHERE email = ? AND otp = ?
-      `;
+      SELECT * FROM user_otp WHERE email = ? AND otp = ?
+    `
     const updateSql = `
-        UPDATE user_otp SET is_verified = 1 WHERE email = ? AND otp = ?
-      `;
+      UPDATE user_otp SET is_verified = 1 WHERE email = ? AND otp = ?
+    `
 
     db.query(selectSql, [email, otp], (error, results) => {
       if (error) {
-        reject(error);
+        reject(error)
       } else if (results.length === 0) {
-        reject(new Error("Invalid OTP"));
+        reject(new Error(resposne.invalidOtp))
       } else {
         db.query(
           updateSql,
           [email, otp],
           (updateError, updateResult) => {
             if (updateError) {
-              reject(updateError);
+              reject(updateError)
             } else {
-              resolve("OTP verified successfully");
+              resolve(resposne.otpverified)
             }
           }
-        );
+        )
       }
-    });
-  });
+    })
+  })
 }
 
 export function checkemailOtp(email) {

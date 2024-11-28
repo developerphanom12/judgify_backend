@@ -7,9 +7,9 @@ import authenticate from "../middleware/authentication.js";
 
 const router = express.Router();
 
-router.post('/register', validateUser, usercreate)
+router.post('/register', validateUser, usercreate) //* --------  DONE
 
-router.post('/login', validateUserLogin, loginuser)
+router.post('/login', validateUserLogin, loginuser)//* --------  DONE
 
 router.post('/send_otp', validateotp, sendOTP);
 

@@ -3,6 +3,9 @@ import bcrypt from "bcrypt"
 import resposne from "../middleware/resposne.js"
 import { changeforgetPassword, changePassword, checkemail, checkemailOtp, checkphone, generateOTP, getCouponCodes, loginUser, storeOTP, userRegister, verifyOTP } from "../service/userService.js"
 import sendGmail from "../mails/createUsermail.js"
+import sendGmailotp from "../mails/sendOtp.js"
+import otpGenerator from "otp-generator"
+
 
 export const usercreate = async (req, res) => {
     const { first_name, last_name, email, password, company, mobile_number, country } = req.body
@@ -97,69 +100,89 @@ export const loginuser = async (req, res) => {
 
 
 export const sendOTP = async (req, res) => {
-    const { email } = req.body
-    const emailExists = await checkemail(email)
+  const { email } = req.body
+  const emailExists = await checkemail(email)
 
-    if (!emailExists) {
-        return res.status(400).json({
-            status: resposne.successFalse,
-            message: resposne.emailnotexist
-        })
+  if (!emailExists) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.emailnotexist,
+    })
+  }
+
+  try {
+    const otp = otpGenerator.generate(6, {
+      digits: true,
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false,
+    })
+ 
+
+    const storedotp = await storeOTP(email, otp)
+    if (storedotp.length === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.otpstorefailed,
+      })
     }
-    try {
+    const sendotpemail = await sendGmailotp(email, otp)
 
-        const otp = generateOTP()
-
-        const storedotp = await storeOTP(email, otp)
-        if (storedotp.length > 0) {
-            res.status(200).json({
-                status: resposne.successTrue,
-                message: resposne.otpsend,
-            })
-        } else {
-            res.status(400).json({
-                status: resposne.successFalse,
-                message: resposne.otpstorefailed,
-            })
-        }
-    } catch (error) {
-        res.status(400).json({
-            status: resposne.successFalse,
-            message: error.message,
-        })
+    if (sendotpemail) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: "Error while sending OTP to email.",
+      })
     }
+
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: resposne.otpsend,
+    })
+
+  } catch (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
 }
+
 
 export const verifyOTPHandler = async (req, res) => {
     const { email, otp } = req.body
     const emailExists = await checkemail(email)
-
+  
     if (!emailExists) {
-        return res.status(400).json({
-            status: resposne.successFalse,
-            message: resposne.emailnotexist,
-        })
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.emailnotexist,
+      })
     }
     try {
-        const verifiedotp = await verifyOTP(email, otp)
-
-        if (verifiedotp.length > 0) {
-            res.status(200).json({
-                status: resposne.successTrue,
-                message: resposne.otpverified,
-            })
-        }
+      const verifiedotp = await verifyOTP(email, otp)
+  
+      if (verifiedotp.length === 0) {
         res.status(400).json({
-            status: resposne.successFalse,
-            message: resposne.otpverifyfailed,
+          status: resposne.successFalse,
+          message: resposne.otpverifyfailed,
         })
+      } else {
+        res.status(200).json({
+          status: resposne.successTrue,
+          message: resposne.otpverified,
+        })
+      }
+  
     } catch (error) {
-        res.status(400).json({
-            status: resposne.successFalse,
-            message: error.message,
-        })
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: error.message,
+      })
     }
-}
+  }
+  
 
 export const updatePassword = async (req, res) => {
 
