@@ -1,5 +1,5 @@
 import express from "express"
-import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, CreateGeneralSettings, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv, GetEmailForVerify, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, sendOTP, SubmissionFormatCreate, updateforgetPassword, updateProfile, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
+import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, CreateGeneralSettings, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv,  juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, sendOTP, SubmissionFormatCreate, updateforgetPassword, updateProfile, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
 import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory } from '../validation/AdminValidation.js'
 import authenticate from '../middleware/authentication.js'
 import upload from '../middleware/multer.js'
@@ -12,7 +12,7 @@ router.post('/register', validateAdmin, usercreate)//* --------  DONE
 
 router.post('/login', validateAdminLogin, loginseller)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//!-----------   to be done today 
+router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//* --------  DONE
 
 router.post('/send_otp', validateotp, sendOTP)//* --------  DONE
 
@@ -20,13 +20,11 @@ router.post('/verifyOtp', validateVerifyOtp, verifyOTPHandler)//* --------  DONE
 
 router.post('/updateForgetPassword', validateupdateForgetPassword, updateforgetPassword)//* --------  DONE
 
-router.get('/getEmail/:otpId', GetEmailForVerify)//~ -----delete this not used 
-
 //------------------------------------------ profile Update ----------------------------------------------//
 
 router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
-router.get('/allAwards', authenticate,validatefilterCategory, Awardsget)//&--------- getting implemeted to the frontend
+router.get('/allAwards', authenticate,validatefilterCategory, Awardsget)//* --------  DONE
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
 
@@ -58,13 +56,13 @@ router.get('/getEvent/:event_id', authenticate, MyEventget)//^-------------Secon
 
 router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//^-------------Second modal 
 
-router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)
+router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)//^-------------Second modal 
 
-router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)
+router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)//^-------------Second modal 
 
-router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)
+router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)//^-------------Second modal 
 
-router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)
+router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//^-------------Second modal 
 
 //----------------------------------------- Manage Jury ----------------------------------------------//
 

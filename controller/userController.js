@@ -1,7 +1,7 @@
 const saltRounds = 10
 import bcrypt from "bcrypt"
 import resposne from "../middleware/resposne.js"
-import { changeforgetPassword, changePassword, checkemail, checkemailOtp, checkeventId, checkphone, generateOTP, getCouponCodes, loginUser, storeOTP, userRegister, verifyOTP } from "../service/userService.js"
+import { changeforgetPassword, changePassword, checkemail, checkemailOtp, checkeventId, checkphone,  getCouponCodes, loginUser, storeOTP, userRegister, verifyOTP } from "../service/userService.js"
 import sendGmail from "../mails/createUsermail.js"
 import sendGmailotp from "../mails/sendOtp.js"
 import otpGenerator from "otp-generator"

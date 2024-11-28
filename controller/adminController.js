@@ -64,8 +64,6 @@ import {
   softDeleteCriteriaSetting,
   softDeleteCriteria,
   getJuryName,
-  getEmailwithOtp,
-  checkOtpId,
   getAdminProfile,
   createCoupon,
   checkAdmin,
@@ -2034,42 +2032,6 @@ export const JuryNameget = async (req, res) => {
     }
   } catch (error) {
     res.status(400).json({
-      status: resposne.successFalse,
-      message: error.message,
-    })
-  }
-}
-
-export const GetEmailForVerify = async (req, res) => {
-  const otpId = req.params.otpId
-
-  try {
-    const otpIdCheck = await checkOtpId(otpId)
-
-    if (!otpIdCheck) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.otpIdfail,
-      })
-    }
-
-    const result = await getEmailwithOtp(otpId)
-
-    if (!result || !result.email) {
-      return res.status(400).json({
-        status: resposne.successFalse,
-        message: resposne.nodatavail,
-      })
-    }
-
-    return res.status(200).json({
-      status: resposne.successTrue,
-      message: resposne.fetchSuccess,
-      data: result,
-    })
-
-  } catch (error) {
-    return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
     })

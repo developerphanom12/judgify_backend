@@ -2221,51 +2221,6 @@ export function getJuryName() {
   })
 }
 
-
-export function checkOtpId(otpId) {
-  return new Promise((resolve, reject) => {
-    const query = `
-  SELECT email
-  FROM admin_otp
-  WHERE id = ?
-`
-
-    db.query(query, [otpId], (err, results) => {
-      if (err) {
-        // console.error("Database query error in checkOtpId:", err)
-        return reject(new Error("Failed to check OTP ID in the database."))
-      }
-
-      resolve(true)
-    })
-  })
-}
-
-export function getEmailwithOtp(otpId) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      SELECT email
-      FROM admin_otp
-      WHERE is_verified = 0 AND id = ?  
-    `
-
-    db.query(query, [otpId], (err, results) => {
-      if (err) {
-        // console.error(err)
-        return reject(err)
-      }
-
-      if (results.length === 0) {
-        return reject(new Error('No unverified email found for the given OTP ID'))
-      }
-
-      resolve({
-        email: results[0].email,
-      })
-    })
-  })
-}
-
 export function getAdminProfile(adminId) {
   return new Promise((resolve, reject) => {
     const query = `
