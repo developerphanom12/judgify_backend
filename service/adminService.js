@@ -402,7 +402,7 @@ export async function createEvent(
     return {
       id: result,
       message: resposne.createvent,
-      statusCode: 201
+      statusCode: 200
     };
   } catch (error) {
     console.log("Error in createEvent:", error);
@@ -2358,3 +2358,74 @@ export async function getAwardById(awardId) {
     throw new Error(`Database error: ${error.message}`);
   }
 }
+
+
+//----------------------------------------- dynamic from create  ----------------------------------------------//
+
+
+
+// Create Registration Form
+export const createRegistrationFormService = (eventId, form_schema) => {
+  return new Promise((resolve, reject) => {
+      const query = `INSERT INTO registration_form (eventId, form_schema) VALUES (?, ?)`;
+      db.query(query, [eventId, JSON.stringify(form_schema)], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+      });
+  });
+};
+
+// Get Registration Form by Event ID and registrationFormId
+export const getRegistrationFormService = (eventId, registrationFormId) => {
+  return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM registration_form WHERE eventId = ? AND id = ? AND is_deleted = 0`;
+      db.query(query, [eventId, registrationFormId], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+      });
+  });
+};
+
+// Update Registration Form
+export const updateRegistrationFormService = (eventId, form_schema) => {
+  return new Promise((resolve, reject) => {
+      const query = `UPDATE registration_form SET form_schema = ? WHERE eventId = ? AND is_deleted = 0`;
+      db.query(query, [JSON.stringify(form_schema), eventId], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+      });
+  });
+};
+
+// Create Entry Form
+export const createEntryFormService = (eventId, form_schema) => {
+  return new Promise((resolve, reject) => {
+      const query = `INSERT INTO entry_form (eventId, form_schema) VALUES (?, ?)`;
+      db.query(query, [eventId, JSON.stringify(form_schema)], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+      });
+  });
+};
+
+// Get Entry Form by Event ID
+export const getEntryFormService = (eventId) => {
+  return new Promise((resolve, reject) => {
+      const query = `SELECT * FROM entry_form WHERE eventId = ? AND is_deleted = 0`;
+      db.query(query, [eventId], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+      });
+  });
+};
+
+// Update Entry Form
+export const updateEntryFormService = (eventId, form_schema) => {
+  return new Promise((resolve, reject) => {
+      const query = `UPDATE entry_form SET form_schema = ? WHERE eventId = ? AND is_deleted = 0`;
+      db.query(query, [JSON.stringify(form_schema), eventId], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+      });
+  });
+};

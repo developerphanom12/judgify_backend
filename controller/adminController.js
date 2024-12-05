@@ -73,6 +73,12 @@ import {
   checkAwardId,
   EmptyStartDate,
   EmptyEndDate,
+  createRegistrationFormService,
+  getRegistrationFormService,
+  updateRegistrationFormService,
+  createEntryFormService,
+  getEntryFormService,
+  updateEntryFormService,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -2186,3 +2192,119 @@ export const AwardByIdget = async (req, res) => {
     })
   }
 }
+
+
+//----------------------------------------- Dynamic form create  ----------------------------------------------//
+
+
+
+
+  // Create Registration Form
+  export const createRegistrationForm = async (req, res) => {
+    const { form_schema, eventId } = req.body;  // Now you're also receiving the 'id' in the body
+  
+
+    try {
+        // Now passing the id along with form_schema to the service function
+        const result = await createRegistrationFormService(eventId, form_schema);
+
+        // Send success response
+        return res.status(200).json({ 
+            status: 'success', 
+            message: 'Registration form created successfully',
+            id: result.insertId  // Send the generated id after insertion
+        });
+    } catch (error) {
+        return res.status(500).json({ status: 'failure', message: error.message });
+    }
+};
+
+  // Get Registration Form by Event ID
+  export const getRegistrationFormByEventId = async (req, res) => {
+      const { eventId } = req.params;
+      const { registrationFormId } = req.query; 
+  
+      if (!registrationFormId) {
+          return res.status(400).json({ status: false, message: 'registrationFormId is required' });
+      }
+  
+      try {
+          const result = await getRegistrationFormService(eventId, registrationFormId);
+          return res.status(200).json({ status: true, message: 'Registration form fetched successfully', data: result[0] });
+      } catch (error) {
+          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+      }
+  };
+  
+  // Update Registration Form
+  export const updateRegistrationForm = async (req, res) => {
+      const { eventId } = req.params;
+      const { form_schema } = req.body;
+  
+      if (!form_schema) {
+          return res.status(400).json({ status: false, message: 'form_schema is required' });
+      }
+  
+      try {
+          const result = await updateRegistrationFormService(eventId, form_schema);
+          if (result.affectedRows === 0) {
+              return res.status(400).json({ status: false, message: 'No registration form found for this event or form was deleted' });
+          }
+          return res.status(200).json({ status: true, message: 'Registration form updated successfully' });
+      } catch (error) {
+          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+      }
+  };
+  
+  // Create Entry Form
+  export const createEntryForm = async (req, res) => {
+      const { eventId } = req.params;
+      const { form_schema } = req.body;
+  
+      if (!form_schema) {
+          return res.status(400).json({ status: 'failure', message: 'Form schema is required' });
+      }
+  
+      try {
+          const result = await createEntryFormService(eventId, form_schema);
+          return res.status(200).json({ status: 'success', message: 'Entry form created successfully', id: result.insertId });
+      } catch (error) {
+          return res.status(500).json({ status: 'failure', message: error.message });
+      }
+  };
+  
+  // Get Entry Form by Event ID
+  export const getEntryFormByEventId = async (req, res) => {
+      const { eventId } = req.params;
+  
+      try {
+          const result = await getEntryFormService(eventId);
+          if (result.length === 0) {
+              return res.status(400).json({ status: false, message: 'No Entry form found for this event' });
+          }
+          return res.status(200).json({ status: true, message: 'Entry form fetched successfully', data: result[0] });
+      } catch (error) {
+          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+      }
+  };
+  
+  // Update Entry Form
+  export const updateEntryForm = async (req, res) => {
+      const { eventId } = req.params;
+      const { form_schema } = req.body;
+  
+      if (!form_schema) {
+          return res.status(400).json({ status: false, message: 'form_schema is required' });
+      }
+  
+      try {
+          const result = await updateEntryFormService(eventId, form_schema);
+          if (result.affectedRows === 0) {
+              return res.status(400).json({ status: false, message: 'No entry form found for this event or form was deleted' });
+          }
+          return res.status(200).json({ status: true, message: 'Entry form updated successfully' });
+      } catch (error) {
+          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+      }
+  };
+  
