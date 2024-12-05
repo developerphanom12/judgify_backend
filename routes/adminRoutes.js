@@ -77,7 +77,7 @@ router.post('/toLive', authenticate, ValidateEventLive, EventLive)
 router.post('/toArchive', authenticate, ValidateEventArchive, EventArchive)
 
 //----------------------------------------- ScoreCard Create ----------------------------------------------//
-
+ 
 router.post('/scorecardCreate', authenticate, ValidateScoreCardCriteria, ScorecardCreate)
 
 router.post('/criteriaSettingCreate', authenticate, ValidateCriteriaSettingsCreate, CriteriaSettingCreate)
@@ -116,7 +116,7 @@ router.get('/registrationForm/:eventId', getRegistrationFormByEventId);
 router.put('/registrationForm/:eventId', updateRegistrationForm);
 
 // Entry Form Routes
-router.post('/entryForm/:eventId', createEntryForm);
+router.post('/entryForm/', createEntryForm);
 router.get('/entryForm/:eventId', getEntryFormByEventId);
 router.put('/entryForm/:eventId', updateEntryForm);
 

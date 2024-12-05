@@ -2258,8 +2258,7 @@ export const AwardByIdget = async (req, res) => {
   
   // Create Entry Form
   export const createEntryForm = async (req, res) => {
-      const { eventId } = req.params;
-      const { form_schema } = req.body;
+      const {eventId, form_schema } = req.body;
   
       if (!form_schema) {
           return res.status(400).json({ status: 'failure', message: 'Form schema is required' });
