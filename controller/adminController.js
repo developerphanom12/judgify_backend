@@ -88,6 +88,7 @@ import { fileURLToPath } from 'url'
 import otpGenerator from "otp-generator"
 import sendGmailAssign from "../mails/mail.js"
 import sendGmailotp from "../mails/sendOtp.js"
+import ExcelJS from 'exceljs'
 
 
 export const usercreate = async (req, res) => {
@@ -587,42 +588,107 @@ if (!fs.existsSync(directoryPath)) {
   fs.mkdirSync(directoryPath)
 }
 
+// export const exportCsv = async (req, res) => {
+//   const role = req.user.role;
+//   const eventId = req.query.eventId; 
+
+//   if (role !== "admin") {
+//     return res.status(400).json({
+//       status: resposne.successFalse,
+//       message: resposne.unauth,
+//     });
+//   }
+
+
+//   try {
+//     // console.log('Event ID:', eventId);
+//     // console.log('Event ID:', eventId);
+
+//     const sheet = await exportToExcel(eventId);
+
+
+//     fs.writeFileSync(filePath, sheet);
+//     const filePath = path.join(directoryPath, 'Awards Category.xlsx');
+
+//     fs.writeFileSync(filePath, sheet);
+
+//     return res.status(200).json({
+//       status: resposne.successTrue,
+//       message: resposne.downloadSuccess,
+//       path: filePath,
+//     });
+     
+//   } catch (error) {
+//     // console.error('Error exporting to Excel:', error);
+//     // console.error('Error exporting to Excel:', error);
+//     res.status(400).send({
+//       status: resposne.successFalse,
+//       message: error.message,
+//     });
+//   }
+// };
+
 export const exportCsv = async (req, res) => {
-  const role = req.user.role;
+  try {
   const eventId = req.query.eventId; 
 
-  if (role !== "admin") {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.unauth,
+    if (!eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "Event ID is required",
+      });
+    }
+
+    // Get the data from the database
+    const products = await exportToExcel(eventId);
+
+    // If no data is available to export
+    if (!products || products.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No product data available to export",
+      });
+    }
+
+    // Create an Excel workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Products");
+
+    // Define the columns for the worksheet
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 5 },
+      { header: "Event ID", key: "eventId", width: 12 },
+      { header: "Category Name", key: "category_name", width: 20 },
+      { header: "Category Prefix", key: "category_prefix", width: 15 },
+      { header: "Belongs Group", key: "belongs_group", width: 35 },
+      { header: "Limit Submission", key: "limit_submission", width: 35 },
+      { header: "Closing Date", key: "closing_date", width: 25 },
+    ];
+
+    // Add the rows of data to the worksheet
+    products.forEach((product) => {
+      worksheet.addRow(product);
     });
-  }
 
+    // Set headers to prompt file download
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=products.xlsx"
+    );
 
-  try {
-    // console.log('Event ID:', eventId);
-    // console.log('Event ID:', eventId);
-
-    const sheet = await exportToExcel(eventId);
-
-
-    fs.writeFileSync(filePath, sheet);
-    const filePath = path.join(directoryPath, 'Awards Category.xlsx');
-
-    fs.writeFileSync(filePath, sheet);
-
-    return res.status(200).json({
-      status: resposne.successTrue,
-      message: resposne.downloadSuccess,
-      path: filePath,
-    });
-     
+    // Write the workbook to the response and close the connection
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (error) {
-    // console.error('Error exporting to Excel:', error);
-    // console.error('Error exporting to Excel:', error);
-    res.status(400).send({
-      status: resposne.successFalse,
-      message: error.message,
+    // Catch any errors that occur
+    res.status(500).json({
+      status: false,
+      message: "Failed to export data to Excel",
+      error: error.message,
     });
   }
 };

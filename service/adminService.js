@@ -568,23 +568,81 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
   });
 }
 
-export function exportToExcel(eventId) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Award Category");
+// export function exportToExcel(eventId) {
+//   const workbook = new ExcelJS.Workbook();
+//   const worksheet = workbook.addWorksheet("Award Category");
 
-  worksheet.columns = [
-    { header: "ID", key: "id", width: 5 },
-    { header: "Event ID", key: "eventId", width: 12 },
-    { header: "Category Name", key: "category_name", width: 20 },
-    { header: "Category Prefix", key: "category_prefix", width: 15 },
-    { header: "Belongs Group", key: "belongs_group", width: 35 },
-    { header: "Limit Submission", key: "limit_submission", width: 35 },
-    { header: "Closing Date", key: "closing_date", width: 25 },
-  ];
+//   worksheet.columns = [
+//     { header: "ID", key: "id", width: 5 },
+//     { header: "Event ID", key: "eventId", width: 12 },
+//     { header: "Category Name", key: "category_name", width: 20 },
+//     { header: "Category Prefix", key: "category_prefix", width: 15 },
+//     { header: "Belongs Group", key: "belongs_group", width: 35 },
+//     { header: "Limit Submission", key: "limit_submission", width: 35 },
+//     { header: "Closing Date", key: "closing_date", width: 25 },
+//   ];
 
+//   return new Promise((resolve, reject) => {
+//     const sql = `
+//       SELECT 
+//         a.id,
+//         a.eventId,
+//         a.category_name,
+//         a.category_prefix,
+//         a.belongs_group,
+//         a.limit_submission,
+//         e.closing_date  
+//       FROM awards_category a 
+//       LEFT JOIN event_details e ON a.eventId = e.id
+//       WHERE e.id = ?
+//       `;
+
+//     // console.log('Executing SQL:', sql);
+//     // console.log('With parameters:', [eventId]);
+
+//     db.query(sql, [eventId], (err, results) => {
+//       if (err) {
+//         // console.error('SQL Error:', err);
+//         return reject(err);
+//       }
+
+//       // console.log('Query Results:', results);
+
+//       results.forEach((row) => {
+//         worksheet.addRow({
+//           id: row.id,
+//           eventId: row.eventId,
+//           category_name: row.category_name,
+//           category_prefix: row.category_prefix,
+//           belongs_group: row.belongs_group,
+//           limit_submission: row.limit_submission,
+//           closing_date: row.closing_date,
+//         });
+//       });
+
+//       worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
+//         cell.font = { bold: true };
+//       });
+
+//       workbook.xlsx.writeBuffer()
+//         .then((buffer) => {
+//           resolve(buffer);
+//         })
+//         .catch((writeErr) => {
+//           console.error('Error writing workbook:', writeErr);
+//           reject(writeErr);
+//         });
+//     });
+//   });
+// }
+
+
+
+export const exportToExcel = async (eventId) => {
   return new Promise((resolve, reject) => {
-    const sql = `
-      SELECT 
+    try {
+      const query = `
+        SELECT 
         a.id,
         a.eventId,
         a.category_name,
@@ -597,44 +655,20 @@ export function exportToExcel(eventId) {
       WHERE e.id = ?
       `;
 
-    // console.log('Executing SQL:', sql);
-    // console.log('With parameters:', [eventId]);
-
-    db.query(sql, [eventId], (err, results) => {
-      if (err) {
-        // console.error('SQL Error:', err);
-        return reject(err);
-      }
-
-      // console.log('Query Results:', results);
-
-      results.forEach((row) => {
-        worksheet.addRow({
-          id: row.id,
-          eventId: row.eventId,
-          category_name: row.category_name,
-          category_prefix: row.category_prefix,
-          belongs_group: row.belongs_group,
-          limit_submission: row.limit_submission,
-          closing_date: row.closing_date,
-        });
+      db.query(query,[eventId], (err, results) => {
+        if (err) {
+          console.error("Error executing query:", err.message);
+          return reject(err);
+        }
+        resolve(results);
       });
-
-      worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
-        cell.font = { bold: true };
-      });
-
-      workbook.xlsx.writeBuffer()
-        .then((buffer) => {
-          resolve(buffer);
-        })
-        .catch((writeErr) => {
-          console.error('Error writing workbook:', writeErr);
-          reject(writeErr);
-        });
-    });
+    } catch (error) {
+      console.error("Error in getProductsData function:", error.message);
+      reject(error);
+    }
   });
-}
+};
+
 
 export function getEventDashboard(skip, limit, id, sortOrder ) {
   return new Promise((resolve, reject) => {
