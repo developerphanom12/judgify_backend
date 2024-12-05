@@ -2308,24 +2308,42 @@ export const SearchEvent = async (req, res) => {
         return res.status(500).json({ status: 'failure', message: error.message });
     }
 };
+// Get Registration Form by Event ID
+export const getRegistrationFormByEventId = async (req, res) => {
+  const { registrationFormId, eventId } = req.query; 
 
-  // Get Registration Form by Event ID
-  export const getRegistrationFormByEventId = async (req, res) => {
-      const { eventId } = req.params;
-      const { registrationFormId } = req.query; 
-  
-      if (!registrationFormId) {
-          return res.status(400).json({ status: false, message: 'registrationFormId is required' });
-      }
-  
-      try {
-          const result = await getRegistrationFormService(eventId, registrationFormId);
-          return res.status(200).json({ status: true, message: 'Registration form fetched successfully', data: result[0] });
-      } catch (error) {
-          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
-      }
-  };
-  
+  if (!registrationFormId) {
+    return res.status(400).json({ status: false, message: 'registrationFormId is required' });
+  }
+
+  try {
+    // Fetch the registration form using a service or query
+    const result = await getRegistrationFormService(eventId, registrationFormId);
+
+    // Check if data exists
+    if (result.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: 'No data found for the given eventId and registrationFormId'
+      });
+    }
+
+    // Return the data if found
+    return res.status(200).json({
+      status: true,
+      message: 'Registration form fetched successfully',
+      data: result[0] // Assuming result is an array and you want the first item
+    });
+    
+  } catch (error) {
+    // Handle any errors
+    return res.status(500).json({
+      status: false,
+      message: error.message || 'Internal server error occurred'
+    });
+  }
+};
+
   // Update Registration Form
   export const updateRegistrationForm = async (req, res) => {
       const { eventId } = req.params;

@@ -114,7 +114,7 @@ router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 
 // Registration Form Routes
 router.post('/registrationForm', createRegistrationForm);
-router.get('/registrationForm/:eventId', getRegistrationFormByEventId);
+router.get('/registrationForm/', getRegistrationFormByEventId);
 router.put('/registrationForm/:eventId', updateRegistrationForm);
 
 // Entry Form Routes
