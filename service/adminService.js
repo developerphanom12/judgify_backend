@@ -95,7 +95,7 @@ export function loginAdmin(email, password) {
         const token = jwt.sign(
           {
             id: user.id,
-            name: user.name,
+            first_name: user.first_name,
             email: user.email,
             mobile_number: user.mobile_number,
             role: user.role,
@@ -106,7 +106,7 @@ export function loginAdmin(email, password) {
         resolve({
           data: {
             id: user.id,
-            name: user.name,
+            first_name: user.first_name,
             email: user.email,
             mobile_number: user.mobile_number,
             role: user.role,
