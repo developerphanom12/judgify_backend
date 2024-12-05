@@ -79,6 +79,7 @@ import {
   createEntryFormService,
   getEntryFormService,
   updateEntryFormService,
+  searchEvent,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -2193,6 +2194,29 @@ export const AwardByIdget = async (req, res) => {
   }
 }
 
+export const SearchEvent = async (req, res) => {
+  try {
+    const { search } = req.query
+    const result = await searchEvent(search)
+    if (result.length > 0) {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      })
+    } else {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      })
+    }
+  } catch (error) {
+    res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    })
+  }
+}
 
 //----------------------------------------- Dynamic form create  ----------------------------------------------//
 

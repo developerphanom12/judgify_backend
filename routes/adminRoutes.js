@@ -6,6 +6,8 @@ import upload from '../middleware/multer.js'
 
 const router = express.Router()
 
+router.get('/SearchEvent', SearchEvent)
+
 //------------------------------------------ admin login ----------------------------------------------//
 
 router.post('/register', validateAdmin, usercreate)//* --------  DONE

@@ -2359,6 +2359,24 @@ export async function getAwardById(awardId) {
   }
 }
 
+export function searchEvent(search) {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT * FROM event_details 
+      WHERE event_name LIKE ? AND is_deleted = 0`
+
+    const values = [`%${search}%`]
+
+    db.query(query, values, (error, results) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(results)
+      }
+    })
+  })
+}
+
 
 //----------------------------------------- dynamic from create  ----------------------------------------------//
 
@@ -2429,3 +2447,5 @@ export const updateEntryFormService = (eventId, form_schema) => {
       });
   });
 };
+
+
