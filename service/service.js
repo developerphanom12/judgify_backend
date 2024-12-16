@@ -116,46 +116,69 @@ export async function createEvent(
 
 export function additional_emailssss(eventId, additional_email) {
   return new Promise((resolve, reject) => {
-    const InsertSql = `Insert INTO additional_emails (eventId,additonal_email)
-      VALUES (?,?)
-      `
-    const queries = additional_email.map((additional_email) => {
+    // Check if additional_email is an array, otherwise default to empty array
+    if (!Array.isArray(additional_email)) {
+      return reject(new Error("additional_email must be an array"));
+    }
+
+    const insertSql = `
+      INSERT INTO additional_emails (eventId, additonal_email)
+      VALUES (?, ?)
+    `;
+
+    const queries = additional_email.map((email) => {
       return new Promise((res, rej) => {
-        db.query(InsertSql, [eventId, additional_email], (error, result) => {
+        // You can also add validation for email here (e.g., format check)
+        db.query(insertSql, [eventId, email], (error, result) => {
           if (error) {
-            console.log("additional Error:", error)
-            rej(error)
+            console.log("Error adding additional email:", error);
+            rej(error); // Reject the promise on error
           } else {
-            res(result.insertId)
+            res(result.insertId); // Resolve with the inserted email ID
           }
-        })
-      })
-    })
-    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
-  })
+        });
+      });
+    });
+
+    // Wait for all insertions to complete
+    Promise.all(queries)
+      .then((ids) => resolve(ids)) // Resolves with all email IDs
+      .catch((error) => reject(error)); // Reject on any error
+  });
 }
 
 export function industry_types(eventId, industry_types) {
   return new Promise((resolve, reject) => {
-    const InsertSql = `INSERT INTO industry_types (eventId, industry_type) 
-   VALUES (?, ?)`
+    // Check if industry_types is an array, otherwise default to empty array
+    if (!Array.isArray(industry_types)) {
+      return reject(new Error("industry_types must be an array"));
+    }
+
+    const insertSql = `
+      INSERT INTO industry_types (eventId, industry_type) 
+      VALUES (?, ?)
+    `;
+
     const queries = industry_types.map((industry_type) => {
       return new Promise((res, rej) => {
-        db.query(InsertSql, [eventId, industry_type], (error, result) => {
+        db.query(insertSql, [eventId, industry_type], (error, result) => {
           if (error) {
-            console.log("industry Error:", error)
-            rej(error)
+            console.log("Error adding industry type:", error);
+            rej(error); // Reject promise on error
           } else {
-            res(result.insertId)
+            res(result.insertId); // Resolve with the inserted industry type ID
           }
-        })
-      })
-    })
-    console.log("industry Error:", error)
-    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
+        });
+      });
+    });
 
-  })
+    // Wait for all insertions to complete
+    Promise.all(queries)
+      .then((ids) => resolve(ids)) // Resolves with all industry type IDs
+      .catch((error) => reject(error)); // Reject on any error
+  });
 }
+
 
 export const updateEventDetails = async (eventId, updates) => {
   // Building the SET clause dynamically

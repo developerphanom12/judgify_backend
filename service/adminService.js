@@ -305,24 +305,24 @@ export async function changeforgetPassword({ email, newPassword }) {
   })
 }
 
-export function checkAdmin(adminId) {
-  return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE id = ?";
-    db.query(query, [adminId], (err, results) => {
-      if (err) {
-        return reject(new Error("Database query error while checking admin"));
-      }
-      resolve(results.length > 0);
-    });
-  });
-}
-
 export function checkeventEmail(email) {
   return new Promise((resolve, reject) => {
     const query = "SELECT * FROM event_details WHERE email = ?";
     db.query(query, [email], (err, results) => {
       if (err) {
         return reject(new Error("Database query error while checking event's email"));
+      }
+      resolve(results.length > 0);
+    });
+  });
+}
+
+export function checkAdmin(adminId) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM admin WHERE id = ?";
+    db.query(query, [adminId], (err, results) => {
+      if (err) {
+        return reject(new Error("Database query error while checking admin"));
       }
       resolve(results.length > 0);
     });
@@ -401,8 +401,8 @@ export async function createEvent(
 
     return {
       id: result,
-      message: resposne.createvent,
-      statusCode: 200
+      inserId:result.insertId,
+      message: resposne.createvent, // Assuming response is defined elsewhere
     };
   } catch (error) {
     console.log("Error in createEvent:", error);
@@ -410,49 +410,67 @@ export async function createEvent(
   }
 }
 
-export function additional_emailssss(eventId, additional_email) {
+
+export function additional_emailssss(eventId, additionalEmails) {
   return new Promise((resolve, reject) => {
-    const InsertSql = `Insert INTO additional_emails (eventId,additonal_email)
-      VALUES (?,?)
-      `
-    const queries = additional_email.map((additional_email) => {
+    // Validate that additionalEmails is an array
+    if (!Array.isArray(additionalEmails)) {
+      const error = new Error("additionalEmails must be an array");
+      console.log("Error in additional_emailssss: ", error.message);
+      return reject(error);  // Reject the promise if the data is invalid
+    }
+
+    const insertSql = `INSERT INTO additional_emails (eventId, additonal_email) VALUES (?, ?)`;
+    const queries = additionalEmails.map((email) => {
       return new Promise((res, rej) => {
-        db.query(InsertSql, [eventId, additional_email], (error, result) => {
+        db.query(insertSql, [eventId, email], (error, result) => {
           if (error) {
-            console.log("additional Error:", error)
-            rej(error)
+            console.log("Error inserting additional email:", error);
+            rej(error);
           } else {
-            res(result.insertId)
+            res(result.insertId);
           }
-        })
-      })
-    })
-    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
-  })
+        });
+      });
+    });
+
+    Promise.all(queries)
+      .then((ids) => resolve(ids))
+      .catch((error) => reject(error));
+  });
 }
 
-export function industry_types(eventId, industry_types) {
+export function industry_types(eventId, industryTypes) {
   return new Promise((resolve, reject) => {
-    const InsertSql = `INSERT INTO industry_types (eventId, industry_type) 
-   VALUES (?, ?)`
-    const queries = industry_types.map((industry_type) => {
+    // Validate that industryTypes is an array
+    if (!Array.isArray(industryTypes)) {
+      const error = new Error("industryTypes must be an array");
+      console.log("Error in industry_types: ", error.message);
+      return reject(error);  // Reject the promise if the data is invalid
+    }
+
+    const insertSql = `INSERT INTO industry_types (eventId, industry_type) VALUES (?, ?)`;
+    const queries = industryTypes.map((industryType) => {
       return new Promise((res, rej) => {
-        db.query(InsertSql, [eventId, industry_type], (error, result) => {
+        db.query(insertSql, [eventId, industryType], (error, result) => {
           if (error) {
-            console.log("industry Error:", error)
-            rej(error)
+            console.log("Error inserting industry type:", error);
+            rej(error);
           } else {
-            res(result.insertId)
+            res(result.insertId);
           }
-        })
-      })
-    })
-    // console.log("industry Error:",error)
-    Promise.all(queries).then((ids) => resolve(ids)).catch((error) => reject(error))
+        });
+      });
+    });
 
-  })
+    Promise.all(queries)
+      .then((ids) => resolve(ids))
+      .catch((error) => {
+        console.log("Error inserting industry types:", error);
+        reject(error);
+      });
+  });
 }
-
 
 export function checkeventId(eventId) {
   return new Promise((resolve, reject) => {
@@ -938,8 +956,6 @@ export async function EmptyEndDate(awardId) {
   }
 }
 
-
-
 export async function softDeleteAward(awardId) {
   const updateSql = "UPDATE awards_category SET is_deleted = 1 WHERE id = ?"
 
@@ -977,7 +993,6 @@ export function checkifDeleted(awardId) {
     });
   });
 }
-
 
 export async function getEventById(eventId) {
   const selectSql = `
@@ -1063,8 +1078,6 @@ export async function getEventById(eventId) {
     throw new Error(`Database error: ${error.message}`);
   }
 }
-
-
 
 export const deleteIndustryTypes = async (eventId) => {
   return new Promise((resolve, reject) => {

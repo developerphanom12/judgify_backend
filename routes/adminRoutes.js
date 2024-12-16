@@ -55,32 +55,32 @@ router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE
 //----------------------------------------- Update Event ----------------------------------------------//
 
 router.get('/getEvent/:eventId', authenticate, MyEventget)//& Ok tested
- //^-------------Second modal 
+//^-------------Second modal 
 
 router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//& Ok tested
-// //^-------------Second modal 
+//^-------------Second modal 
 
 router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)//& Ok tested
 //^-------------Second modal 
 
-router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)//^-------------Second modal 
+router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)//& Ok tested
+//^-------------Second modal
 
 router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)//& Ok tested
-// ^-------------Second modal 
+// ^-------------Second modal
 
-router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//^-------------Second modal 
-
-//----------------------------------------- Manage Jury ----------------------------------------------//
-
-router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGeneralSettings)
-
-
+router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//& Ok tested
+//^-------------Second modal 
 
 //--------------------------------------- draft to live or archive -----------------------------------------//
 
 router.post('/toLive', authenticate, ValidateEventLive, EventLive)
 
 router.post('/toArchive', authenticate, ValidateEventArchive, EventArchive)
+
+//----------------------------------------- Manage Jury ----------------------------------------------//
+
+router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGeneralSettings)
 
 //----------------------------------------- ScoreCard Create ----------------------------------------------//
  
@@ -113,10 +113,9 @@ router.get('/getJuryGroups', authenticate, JuryGroupGet)
 
 router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 
-
 //----------------------------------------- dynamic forms ----------------------------------------------//
 
-// Registration Form Routes
+// Registration Form Routes 
 router.post('/registrationForm', createRegistrationForm);
 router.get('/registrationForm', getRegistrationFormByEventId);
 router.put('/registrationForm/:eventId', updateRegistrationForm);

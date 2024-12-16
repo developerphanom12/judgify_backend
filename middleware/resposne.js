@@ -199,5 +199,6 @@ const resposne = {
   awardDeleted:"Award not found or Deleted ",
   checkvisible: "Event  Already visible to public",
   visiblezero: "Event is now made private" ,
+  noadmin:"No admin Id found or Admin does not exist"
 }
 export default resposne

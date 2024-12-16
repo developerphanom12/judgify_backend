@@ -369,7 +369,7 @@ export const eventCreate = async (req, res) => {
   if (!adminExists) {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: "No admin Id found or Admin does not exist",
+      message: resposne.noadmin,
     });
   }
   const {
@@ -391,18 +391,19 @@ export const eventCreate = async (req, res) => {
   } = req.body;
 
   const checkEmail = await checkeventEmail(email)
-  if (checkEmail) {
+  if(checkEmail){
     return res.status(400).json({
-      status: resposne.successFalse,
-      message: "email already exist."
+      status:resposne.successFalse,
+      message:resposne.checkEmail
     })
   }
   try {
 
+
     if (limit_submission === 1 && (submission_limit === undefined || submission_limit < 1)) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.submisionlimit
+        message: resposne.submisionlimit,
       });
     }
 
@@ -430,30 +431,28 @@ export const eventCreate = async (req, res) => {
       banner,
       event_description
     );
-    const emailcreate = await additional_emailssss(eventResult.id, additional_email)
-    if (emailcreate.error) {
+    const emailcreate = await additional_emailssss(eventResult.id,additional_email)
+    if(emailcreate.error){
       return res.status(400).json({
-        status: false,
-        message: "failed to create additional email"
+        status:resposne.successFalse,
+        message:error.message
       })
     }
 
-    const indstrycreate = await industry_types(eventResult.id, industry_type)
-    if (indstrycreate.error) {
+    const indstrycreate = await industry_types(eventResult.id,industry_type)
+    if(indstrycreate.error){
       return res.status(400).json({
-        status: false,
-        message: "error.message"
+        status:resposne.successFalse,
+        message:error.message
       })
     }
-
-
+ 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: "resposne.createvent",
-      eventId: eventResult.id
+      message: resposne.createvent,
+      eventId:eventResult.id
     });
   } catch (error) {
-    console.log("erro creating event", error)
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message,
