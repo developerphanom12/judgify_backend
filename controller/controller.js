@@ -121,17 +121,15 @@ export const eventCreate = async (req, res) => {
 
 export const eventUpdate = async (req, res) => {
   try {
-    // Authentication and role check
     const { role } = req.user;
 
     if (role !== "admin") {
-      return res.status(403).json({
+      return res.status(400).json({
         status: false,
         message: "Unauthorized access"
       });
     }
 
-    // Extract event ID and update fields
     const { 
       eventId, 
       additional_email, 
@@ -139,20 +137,16 @@ export const eventUpdate = async (req, res) => {
       ...eventUpdates 
     } = req.body;
 
-
-    // Verify event exists
     const eventExists = await checkeventId(eventId);
     if (!eventExists) {
-      return res.status(404).json({
+      return res.status(400).json({
         status: false,
         message: "Event not found"
       });
     }
 
-    // Prepare update promises
     const updatePromises = [];
 
-    // Event Details Update
     if (Object.keys(eventUpdates).length > 0) {
       updatePromises.push(
         updateEventDetails(eventId, eventUpdates)
@@ -163,7 +157,6 @@ export const eventUpdate = async (req, res) => {
       );
     }
 
-    // Additional Emails Update
     if (additional_email && additional_email.length > 0) {
       updatePromises.push(
         updateAdditionalEmails(eventId, additional_email)
@@ -174,7 +167,6 @@ export const eventUpdate = async (req, res) => {
       );
     }
 
-    // Industry Types Update
     if (industry_type && industry_type.length > 0) {
       updatePromises.push(
         updateIndustryTypes(eventId, industry_type)
@@ -185,25 +177,20 @@ export const eventUpdate = async (req, res) => {
       );
     }
 
-    // Check if any updates are provided
     if (updatePromises.length === 0) {
       return res.status(400).json({
         status: false,
         message: "No updates provided"
       });
     }
-
-    // Execute all updates
     await Promise.all(updatePromises);
 
-    // Prepare update confirmation
     const updatedFields = [
       ...Object.keys(eventUpdates),
       ...(additional_email ? ['additional_email'] : []),
       ...(industry_type ? ['industry_type'] : [])
     ];
 
-    // Success response
     return res.status(200).json({
       status: true,
       message: "Event updated successfully",
@@ -214,16 +201,11 @@ export const eventUpdate = async (req, res) => {
     });
 
   } catch (error) {
-    // Log unexpected errors
     console.error('Event Update Unexpected Error:', error);
 
-    // Differentiated error response
-    return res.status(500).json({
+    return res.status(400).json({
       status: false,
-      message: "Failed to update event",
-      ...(process.env.NODE_ENV === 'development' && { 
-        debugInfo: error.message 
-      })
+   message: error.message 
     });
   }
 };

@@ -154,6 +154,7 @@ const resposne = {
   nosettingvalueFound: "No criteria settings values found to update",
   criteriaSettingValueUpateSuccess: "Criteria settings value updated successfully",
   deletionerrorCheck: "Error checking deletion status",
+  visiblecheck:"error checking visible check",
   groupnotFound: "Group not found",
   groupUpdateFail: "Failed to update jury group status",
   noGroupFound: "No jury group found with the provided ID",
@@ -195,6 +196,8 @@ const resposne = {
   couponFail:"CreateCoupon failed",
   couponSuccess:"Create Coupon success",
   AwardIdRequired:"Invalid Award Id or not Found.",
-  awardDeleted:"Award not found or Deleted "
+  awardDeleted:"Award not found or Deleted ",
+  checkvisible: "Event  Already visible to public",
+  visiblezero: "Event is now made private" ,
 }
 export default resposne

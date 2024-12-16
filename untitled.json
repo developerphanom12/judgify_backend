@@ -1,0 +1,64 @@
+[
+    {
+        "type": "text",
+        "label": "First Name",
+        "visible": true,
+        "dataName": "firstName-1734177166518",
+        "required": true,
+        "isDefault": true,
+        "placeholder": "Enter first name..."
+    },
+    {
+        "type": "text",
+        "label": "Last Name",
+        "visible": true,
+        "dataName": "lastName-1734177166518",
+        "required": true,
+        "isDefault": true,
+        "placeholder": "Enter last name..."
+    },
+    {
+        "type": "email",
+        "label": "Email",
+        "visible": true,
+        "dataName": "email-1734177166518",
+        "required": true,
+        "isDefault": true,
+        "placeholder": "Enter email..."
+    },
+    {
+        "type": "country",
+        "label": "Country",
+        "options": [
+            "USA",
+            "India",
+            "Canada"
+        ],
+        "visible": true,
+        "dataName": "country-1734177166518",
+        "required": true,
+        "isDefault": true
+    },
+    {
+        "type": "radio",
+        "label": "Radio Button",
+        "options": [
+            "Option 1",
+            "Option 2"
+        ],
+        "visible": true,
+        "dataName": "radio-1734177349919",
+        "isRequired": true,
+        "isVisibleIf": false,
+        "renderlabel": "Last Name",
+        "includeOther": false,
+        "isRequiredIf": true,
+        "renderDataName": "lastName-1734177166518",
+        "visibleCondition": "Equals (Default)",
+        "requiredCondition": "Equals (Default)",
+        "visibleFieldValue": "",
+        "requiredFieldValue": "cdccdcd",
+        "visibleConditionValue": "",
+        "requiredConditionValue": ""
+    }
+]

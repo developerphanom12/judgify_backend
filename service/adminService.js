@@ -979,7 +979,7 @@ export function checkifDeleted(awardId) {
 }
 
 
-export async function getEventById(event_id) {
+export async function getEventById(eventId) {
   const selectSql = `
     SELECT 
       ed.id,
@@ -1009,7 +1009,7 @@ export async function getEventById(event_id) {
 
   try {
     const result = await new Promise((resolve, reject) => {
-      db.query(selectSql, [event_id], (fetchError, results) => {
+      db.query(selectSql, [eventId], (fetchError, results) => {
         if (fetchError) {
           return reject(fetchError);
         }
@@ -1078,60 +1078,93 @@ export const deleteIndustryTypes = async (eventId) => {
   })
 }
 
-export const updateEventDetails = async (
-  eventId,
-  event_name,
-  closing_date,
-  closing_time,
-  email,
-  event_url,
-  time_zone,
-  is_endorsement,
-  is_withdrawal,
-  is_ediit_entry,
-  limit_submission,
-  submission_limit
-) => {
-  const updateSql = `
-    UPDATE event_details SET
-      event_name = ?,
-      closing_date = ?,
-      closing_time = ?,
-      email = ?,
-      event_url = ?,
-      time_zone = ?,
-      is_endorsement = ?,
-      is_withdrawal = ?,
-      is_ediit_entry = ?,  
-      limit_submission = ?,
-      submission_limit = ?
-    WHERE id = ?
-  `
+export const updateEventDetails = async (eventId, updates) => {
+  // Building the SET clause dynamically
+  let setClauses = [];
+  let values = [];
 
-  const values = [
-    event_name,
-    closing_date,
-    closing_time,
-    email,
-    event_url,
-    time_zone,
-    is_endorsement,
-    is_withdrawal,
-    is_ediit_entry,
-    limit_submission,
-    submission_limit,
-    eventId
-  ]
+  // Only add fields that are provided
+  if (updates.event_name !== undefined) {
+    setClauses.push("event_name = ?");
+    values.push(updates.event_name);
+  }
+  if (updates.closing_date !== undefined) {
+    setClauses.push("closing_date = ?");
+    values.push(updates.closing_date);
+  }
+  if (updates.closing_time !== undefined) {
+    setClauses.push("closing_time = ?");
+    values.push(updates.closing_time);
+  }
+  if (updates.email !== undefined) {
+    setClauses.push("email = ?");
+    values.push(updates.email);
+  }
+  if (updates.event_url !== undefined) {
+    setClauses.push("event_url = ?");
+    values.push(updates.event_url);
+  }
+  if (updates.time_zone !== undefined) {
+    setClauses.push("time_zone = ?");
+    values.push(updates.time_zone);
+  }
+  if (updates.is_endorsement !== undefined) {
+    setClauses.push("is_endorsement = ?");
+    values.push(updates.is_endorsement);
+  }
+  if (updates.is_withdrawal !== undefined) {
+    setClauses.push("is_withdrawal = ?");
+    values.push(updates.is_withdrawal);
+  }
+  if (updates.is_ediit_entry !== undefined) {
+    setClauses.push("is_ediit_entry = ?");
+    values.push(updates.is_ediit_entry);
+  }
+  if (updates.limit_submission !== undefined) {
+    setClauses.push("limit_submission = ?");
+    values.push(updates.limit_submission);
+  }
+  if (updates.submission_limit !== undefined) {
+    setClauses.push("submission_limit = ?");
+    values.push(updates.submission_limit);
+  }
+
+  values.push(eventId);
+
+  if (setClauses.length === 0) {
+    return Promise.reject({
+      message: "No valid fields to update",
+    });
+  }
+
+  const updateSql = `
+    UPDATE event_details
+    SET ${setClauses.join(', ')}
+    WHERE id = ?
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(updateSql, values, (updateError, result) => {
       if (updateError) {
-        return reject(updateError)
+        console.error("Event Update Error:", updateError);
+        return reject({
+          message: "Failed to update event details",
+          error: updateError,
+        });
       }
-      resolve(result)
-    })
-  })
-}
+
+      if (result.affectedRows === 0) {
+        return reject({
+          message: "No event found with the given ID",
+          eventId: eventId,
+        });
+      }
+
+      resolve(result);
+    });
+  });
+};
+
 
 export const deleteAdditionalEmails = async (eventId) => {
   return new Promise((resolve, reject) => {
@@ -1145,22 +1178,112 @@ export const deleteAdditionalEmails = async (eventId) => {
   })
 }
 
-export function updateAdditionalEmails(eventId, additionalEmail) {
+export const updateAdditionalEmails = async (eventId, additionalEmails) => {
+  const emails = Array.isArray(additionalEmails) ? additionalEmails : [additionalEmails];
+
+  if (emails.length === 0) {
+    return Promise.reject(new Error("No valid additional emails to update"));
+  }
+
+  let setClauses = [];
+  let values = [];
+
+  emails.forEach(email => {
+    setClauses.push("additonal_email = ?");
+    values.push(email);
+  });
+
+  values.push(eventId);
+
+  if (setClauses.length === 0) {
+    return Promise.reject(new Error("No valid additional emails to update"));
+  }
+
+  const updateSql = `
+    UPDATE additional_emails
+    SET ${setClauses.join(', ')}
+    WHERE eventId = ? AND additonal_email IN (?${',?'.repeat(emails.length - 1)})
+  `;
+
   return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO additional_emails (eventId, additonal_email) 
-      VALUES (?, ?)
-      ON DUPLICATE KEY UPDATE additonal_email = ?
-    `
-    db.query(query, [eventId, additionalEmail, additionalEmail], (err, result) => {
-      if (err) {
-        reject(new Error(resposne.insertORUpdateFail))
-      } else {
-        resolve(result)
+    db.query(updateSql, [...values, ...emails], (updateErr, updateResult) => {
+      if (updateErr) {
+        return reject({
+          message: "Failed to update additional emails",
+          error: updateErr,
+        });
       }
-    })
-  })
-}
+
+      if (updateResult.affectedRows === 0) {
+        return reject({
+          message: "No matching emails found to update",
+          eventId: eventId,
+        });
+      }
+
+      resolve({
+        status: 'updated',
+        updatedEmails: emails,
+      });
+    });
+  });
+};
+export const updateIndustryTypes = async (eventId, industryTypes) => {
+  const types = Array.isArray(industryTypes) ? industryTypes : [industryTypes];
+
+  // Early exit if no valid types are provided
+  if (types.length === 0) {
+    return Promise.reject(new Error("No valid industry types to update"));
+  }
+
+  let setClauses = [];
+  let values = [];
+
+  // Build the SET clauses and values for industry types
+  types.forEach(industryType => {
+    setClauses.push("industry_type = ?");
+    values.push(industryType);
+  });
+
+  values.push(eventId);
+
+  // If no valid industry types were provided, reject with error
+  if (setClauses.length === 0) {
+    return Promise.reject(new Error("No valid industry types to update"));
+  }
+
+  const updateSql = `
+    UPDATE industry_types
+    SET ${setClauses.join(', ')}
+    WHERE eventId = ? AND industry_type IN (?${',?'.repeat(types.length - 1)})
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.query(updateSql, [...values, ...types], (updateErr, updateResult) => {
+      if (updateErr) {
+        console.error("Industry Type Update Error:", updateErr);
+        return reject({
+          message: "Failed to update industry types",
+          error: updateErr
+        });
+      }
+
+      if (updateResult.affectedRows === 0) {
+        console.warn(`No matching industry types found to update for eventId ${eventId}`);
+        return reject({
+          message: "No matching industry types found to update",
+          eventId: eventId
+        });
+      }
+
+      resolve({
+        status: 'updated',
+        updatedIndustryTypes: types
+      });
+    });
+  });
+};
+
 
 export const updateEventSocial = (updates, eventId) => {
   return new Promise((resolve, reject) => {
@@ -1277,34 +1400,61 @@ export async function addSubmissionId(eventId, submission_id) {
     throw new Error(`Database Error: ${error.message}`)
   }
 }
+// Check if the event is already visible
+export function checkifAlreadyVisible(awardId) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT is_publicly_visble FROM event_details WHERE id = ?";
+    db.query(query, [awardId], (err, results) => {
+      if (err) {
+        return reject(new Error(resposne.visiblecheck));
+      }
+      if (results.length === 0) {
+        return reject(new Error("Event not found"));
+      }
+
+      const isVisible = results[0].is_publicly_visble === 1;
+      resolve(isVisible);
+    });
+  });
+}
 
 export async function publiclyVisible(eventId, is_publicly_visble) {
+  const updateSql = `UPDATE event_details SET is_publicly_visble = ? WHERE id = ?`;
+  const values = [is_publicly_visble, eventId];
 
-  const updateSql = `UPDATE event_details SET is_publicly_visble = ? WHERE id = ?`
-  const values = [is_publicly_visble, eventId]
   try {
     const result = await new Promise((resolve, reject) => {
-
       db.query(updateSql, values, (updateError, result) => {
         if (updateError) {
-          return reject(new Error(`Database Update Error: ${updateError.message}`))
+          return reject(new Error(`Database Update Error: ${updateError.message}`));
         }
 
         if (result.affectedRows > 0) {
-          resolve(result.affectedRows)
+          resolve(result.affectedRows);
         } else {
-          reject(new Error(resposne.noaffectedRowwithId))
+          reject(new Error(resposne.noaffectedRows));
         }
-      })
-    })
-    return {
-      affectedRows: result,
-      message: resposne.publicVisibleTrue
+      });
+    });
+
+    if (is_publicly_visble === 1) {
+      return {
+        affectedRows: result,
+        message: resposne.publicVisibleTrue,
+      };
+    } else if (is_publicly_visble === 0) {
+      return {
+        affectedRows: result,
+        message: resposne.visiblezero,
+      };
+    } else {
+      throw new Error("Invalid visibility status provided. It must be 1 or 0.");
     }
   } catch (error) {
-    throw new Error(`Database Error: ${error.message}`)
+    throw new Error(`Database Error: ${error.message}`);
   }
 }
+
 
 export async function generalSettings(
   eventId,

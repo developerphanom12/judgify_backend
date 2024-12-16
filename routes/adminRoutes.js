@@ -54,15 +54,19 @@ router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE
 
 //----------------------------------------- Update Event ----------------------------------------------//
 
-router.get('/getEvent/:event_id', authenticate, MyEventget)//^-------------Second modal 
+router.get('/getEvent/:eventId', authenticate, MyEventget)//& Ok tested
+ //^-------------Second modal 
 
-router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//^-------------Second modal 
+router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//& Ok tested
+// //^-------------Second modal 
 
-router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)//^-------------Second modal 
+router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_logo' }, { name: 'event_banner' }, { name: 'social_image' }]), validateUpdateEventSocial, eventupdateSocial)//& Ok tested
+//^-------------Second modal 
 
 router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)//^-------------Second modal 
 
-router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)//^-------------Second modal 
+router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)//& Ok tested
+// ^-------------Second modal 
 
 router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//^-------------Second modal 
 
@@ -114,7 +118,7 @@ router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 
 // Registration Form Routes
 router.post('/registrationForm', createRegistrationForm);
-router.get('/registrationForm/', getRegistrationFormByEventId);
+router.get('/registrationForm', getRegistrationFormByEventId);
 router.put('/registrationForm/:eventId', updateRegistrationForm);
 
 // Entry Form Routes

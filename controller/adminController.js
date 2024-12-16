@@ -24,7 +24,6 @@ import {
   checkifDeleted,
   industry_types,
   updateEventDetails,
-  deleteIndustryTypes,
   getEventById,
   updateEventSocial,
   addSubmissionId,
@@ -38,7 +37,6 @@ import {
   CreateCriteriaSettingValues,
   criteriaSettings,
   updateAdditionalEmails,
-  deleteAdditionalEmails,
   CreateJuryGroup,
   CreateFilteringCriteria,
   CreateFilteringCriteriaCategory,
@@ -80,6 +78,7 @@ import {
   getEntryFormService,
   updateEntryFormService,
   searchEvent,
+  checkifAlreadyVisible,
 } from "../service/adminService.js"
 import resposne from "../middleware/resposne.js"
 import path from "path"
@@ -89,6 +88,7 @@ import otpGenerator from "otp-generator"
 import sendGmailAssign from "../mails/mail.js"
 import sendGmailotp from "../mails/sendOtp.js"
 import ExcelJS from 'exceljs'
+import { updateIndustryTypes } from "../service/service.js"
 
 
 export const usercreate = async (req, res) => {
@@ -108,7 +108,7 @@ export const usercreate = async (req, res) => {
       message: resposne.checkphone,
     })
   }
-  
+
   try {
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
@@ -617,7 +617,7 @@ if (!fs.existsSync(directoryPath)) {
 //       message: resposne.downloadSuccess,
 //       path: filePath,
 //     });
-     
+
 //   } catch (error) {
 //     // console.error('Error exporting to Excel:', error);
 //     // console.error('Error exporting to Excel:', error);
@@ -630,7 +630,7 @@ if (!fs.existsSync(directoryPath)) {
 
 export const exportCsv = async (req, res) => {
   try {
-  const eventId = req.query.eventId; 
+    const eventId = req.query.eventId;
 
     if (!eventId) {
       return res.status(400).json({
@@ -680,7 +680,7 @@ export const exportCsv = async (req, res) => {
       "attachment; filename=products.xlsx"
     );
 
-    // Write the workbook to the response and close the connection
+    // Write the workbook to the resposne and close the connection
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
@@ -711,7 +711,7 @@ export const dashboardEvents = async (req, res) => {
 
   try {
     const parsedSkip = parseInt(skip, 10) || 0;
-    const parsedLimit = parseInt(limit, 100) ||100;
+    const parsedLimit = parseInt(limit, 100) || 100;
 
     const result = await getEventDashboard(parsedSkip, parsedLimit, id, order);
 
@@ -937,103 +937,115 @@ export const deleteAward = async (req, res) => {
 }
 
 export const eventUpdate = async (req, res) => {
-  const role = req.user.role
+  const { role } = req.user;
 
   if (role !== "admin") {
     return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.unauth,
-    })
-  }
-
-  const { eventId } = req.body
-
-  if (!eventId) {
-    return res.status(400).json({
-      status: resposne.successFalse,
-      message: resposne.eventIdRequired,
-    })
+      status: resposne.successTrue,
+      message: resposne.unauth
+    });
   }
 
   const {
-    event_name,
-    closing_date,
-    closing_time,
-    email,
-    event_url,
-    time_zone,
+    eventId,
     additional_email,
-    is_endorsement,
-    is_withdrawal,
-    is_ediit_entry,
-    limit_submission,
-    submission_limit,
     industry_type,
-  } = req.body
+    ...eventUpdates
+  } = req.body;
 
-  if (additional_email && additional_email.includes(email)) {
+  const eventExists = await checkeventId(eventId);
+  if (!eventExists) {
     return res.status(400).json({
       status: resposne.successFalse,
-      message: resposne.diffrentemail,
-    })
+      message: resposne.eventIdfail,
+    });
   }
 
   try {
-    const eventExists = await checkeventId(eventId)
+    // console.log("Received event update request:", req.body); // Log the full request body
+    // console.log("Event Updates after processing:", eventUpdates);
 
-    if (!eventExists) {
+    if (Object.keys(eventUpdates).length === 0 && !additional_email && !industry_type) {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.eventIdfail,
-      })
+        message: resposne.novalidfield
+      });
+    }
+    const updatePromises = [];
+
+    if (Object.keys(eventUpdates).length > 0) {
+      updatePromises.push(
+        updateEventDetails(eventId, eventUpdates)
+          .catch(error => {
+            // console.error('Event Details Update Error:', error);
+            throw {
+              status: resposne.successFalse,
+              message: resposne.novalidfield
+            };
+          })
+      );
     }
 
-    await updateEventDetails(
-      eventId,
-      event_name,
-      closing_date,
-      closing_time,
-      email,
-      event_url,
-      time_zone,
-      is_endorsement,
-      is_withdrawal,
-      is_ediit_entry,
-      limit_submission,
-      submission_limit
-    )
-
-    if (industry_type) {
-      await deleteIndustryTypes(eventId)
-      const industryTypes = Array.isArray(industry_type) ? industry_type : [industry_type]
-      const industryPromises = industryTypes.map(type =>
-        industry_types(eventId, type)
-      )
-      await Promise.all(industryPromises)
+    if (additional_email && additional_email.length > 0) {
+      updatePromises.push(
+        updateAdditionalEmails(eventId, additional_email)
+          .catch(error => {
+            throw {
+              status: resposne.successFalse,
+              message: error.message
+            };
+            // console.error('Additional Emails Update Error:', error);
+            // throw new Error(`Additional emails update failed: ${error.message}`);
+          })
+      );
     }
 
-    if (additional_email) {
-      await deleteAdditionalEmails(eventId)
-      const additionalEmailsArray = Array.isArray(additional_email) ? additional_email : [additional_email]
-      const additionalEmailPromises = additionalEmailsArray.map(email =>
-        updateAdditionalEmails(eventId, email)
-      )
-      await Promise.all(additionalEmailPromises)
+    if (industry_type && industry_type.length > 0) {
+      updatePromises.push(
+        updateIndustryTypes(eventId, industry_type)
+          .catch(error => {
+            throw {
+              status: resposne.successFalse,
+              message: error.message
+            };
+            // console.error('Industry Types Update Error:', error);
+            //throw new Error(`Industry types update failed: ${error.message}`);
+          })
+      );
     }
+
+    if (updatePromises.length === 0) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.noUpdateFieldProvided
+      });
+    }
+    await Promise.all(updatePromises);
+
+    const updatedFields = [
+      ...Object.keys(eventUpdates),
+      ...(additional_email ? ['additional_email'] : []),
+      ...(industry_type ? ['industry_type'] : [])
+    ];
 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: resposne.updateventSuccess,
-      eventId,
-    })
+      message:resposne.eventUpdateSuccess,
+      // data: { eventId,updatedFields }
+    });
+
   } catch (error) {
-    // console.error("Error updating event:", error)
+    // console.error('Event Update Unexpected Error:', error);
+
     return res.status(400).json({
       status: resposne.successFalse,
-      message: error.message,
-    })
+      message: error.message
+    });
   }
-}
+};
+
+
+
 
 export const MyEventget = async (req, res) => {
   const role = req.user.role
@@ -1045,9 +1057,9 @@ export const MyEventget = async (req, res) => {
     })
   }
 
-  const { event_id } = req.params
+  const { eventId } = req.params
 
-  if (!event_id) {
+  if (!eventId) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.eventIdRequired,
@@ -1055,7 +1067,7 @@ export const MyEventget = async (req, res) => {
   }
 
   try {
-    const result = await getEventById(event_id)
+    const result = await getEventById(eventId)
 
     if (!result) {
       res.status(400).json({
@@ -1127,7 +1139,7 @@ export const eventupdateSocial = async (req, res) => {
 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: resposne.updateSuccess,
+      message: resposne.updateventSuccess,
     })
   } catch (error) {
     return res.status(400).json({
@@ -1181,45 +1193,59 @@ export const SubmissionFormatCreate = async (req, res) => {
 }
 
 export const visiblePublicly = async (req, res) => {
-  const { role } = req.user
+  const { role } = req.user;
 
   if (role !== "admin") {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.unauth
-    })
+    });
   }
 
-  const { eventId, is_publicly_visble } = req.body
+  const { eventId, is_publicly_visble } = req.body;
 
-  const eventIdCheck = await checkeventId(eventId)
+  const eventIdCheck = await checkeventId(eventId);
 
   if (!eventIdCheck) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: resposne.eventIdfail
-    })
+    });
   }
 
+  if (is_publicly_visble === 1) {
+    const isAlreadyVisible = await checkifAlreadyVisible(eventId);
+
+    if (isAlreadyVisible) {
+      return res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.checkvisible,  // Event is already publicly visible
+      });
+    }
+  }
   try {
-    const result = await publiclyVisible(eventId, is_publicly_visble)
+    const result = await publiclyVisible(eventId, is_publicly_visble);
 
     if (result.affectedRows === 0) {
       return res.status(400).json({
         status: resposne.successFalse,
         message: resposne.publicVisibleFalse
-      })
+      });
     }
+    const successMessage =
+    is_publicly_visble === 1
+      ? resposne.publicVisibleTrue // Event made visible
+      : resposne.visiblezero; 
 
     return res.status(200).json({
       status: resposne.successTrue,
-      message: resposne.publicVisibleTrue
-    })
+      message: successMessage
+    });
   } catch (error) {
     return res.status(400).json({
       status: resposne.successFalse,
       message: error.message
-    })
+    });
   }
 }
 
@@ -2289,28 +2315,29 @@ export const SearchEvent = async (req, res) => {
 
 
 
-  // Create Registration Form
-  export const createRegistrationForm = async (req, res) => {
-    const { form_schema, eventId } = req.body;  // Now you're also receiving the 'id' in the body
-  
+// Create Registration Form
+export const createRegistrationForm = async (req, res) => {
+  const { form_schema, eventId } = req.body;  // Now you're also receiving the 'id' in the body
 
-    try {
-        // Now passing the id along with form_schema to the service function
-        const result = await createRegistrationFormService(eventId, form_schema);
 
-        // Send success response
-        return res.status(200).json({ 
-            status: 'success', 
-            message: 'Registration form created successfully',
-            id: result.insertId  // Send the generated id after insertion
-        });
-    } catch (error) {
-        return res.status(500).json({ status: 'failure', message: error.message });
-    }
+  try {
+    // Now passing the id along with form_schema to the service function
+    const result = await createRegistrationFormService(eventId, form_schema);
+
+    // Send success resposne
+    return res.status(200).json({
+      status: 'success',
+      message: 'Registration form created successfully',
+      id: result.insertId,  // Send the generated id after insertion
+      result: form_schema
+    });
+  } catch (error) {
+    return res.status(500).json({ status: 'failure', message: error.message });
+  }
 };
 // Get Registration Form by Event ID
 export const getRegistrationFormByEventId = async (req, res) => {
-  const { registrationFormId, eventId } = req.query; 
+  const { registrationFormId, eventId } = req.query;
 
   if (!registrationFormId) {
     return res.status(400).json({ status: false, message: 'registrationFormId is required' });
@@ -2334,7 +2361,7 @@ export const getRegistrationFormByEventId = async (req, res) => {
       message: 'Registration form fetched successfully',
       data: result[0] // Assuming result is an array and you want the first item
     });
-    
+
   } catch (error) {
     // Handle any errors
     return res.status(500).json({
@@ -2344,74 +2371,73 @@ export const getRegistrationFormByEventId = async (req, res) => {
   }
 };
 
-  // Update Registration Form
-  export const updateRegistrationForm = async (req, res) => {
-      const { eventId } = req.params;
-      const { form_schema } = req.body;
-  
-      if (!form_schema) {
-          return res.status(400).json({ status: false, message: 'form_schema is required' });
-      }
-  
-      try {
-          const result = await updateRegistrationFormService(eventId, form_schema);
-          if (result.affectedRows === 0) {
-              return res.status(400).json({ status: false, message: 'No registration form found for this event or form was deleted' });
-          }
-          return res.status(200).json({ status: true, message: 'Registration form updated successfully' });
-      } catch (error) {
-          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
-      }
-  };
-  
-  // Create Entry Form
-  export const createEntryForm = async (req, res) => {
-      const {eventId, form_schema } = req.body;
-  
-      if (!form_schema) {
-          return res.status(400).json({ status: 'failure', message: 'Form schema is required' });
-      }
-  
-      try {
-          const result = await createEntryFormService(eventId, form_schema);
-          return res.status(200).json({ status: 'success', message: 'Entry form created successfully', id: result.insertId });
-      } catch (error) {
-          return res.status(500).json({ status: 'failure', message: error.message });
-      }
-  };
-  
-  // Get Entry Form by Event ID
-  export const getEntryFormByEventId = async (req, res) => {
-      const { eventId } = req.params;
-  
-      try {
-          const result = await getEntryFormService(eventId);
-          if (result.length === 0) {
-              return res.status(400).json({ status: false, message: 'No Entry form found for this event' });
-          }
-          return res.status(200).json({ status: true, message: 'Entry form fetched successfully', data: result[0] });
-      } catch (error) {
-          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
-      }
-  };
-  
-  // Update Entry Form
-  export const updateEntryForm = async (req, res) => {
-      const { eventId } = req.params;
-      const { form_schema } = req.body;
-  
-      if (!form_schema) {
-          return res.status(400).json({ status: false, message: 'form_schema is required' });
-      }
-  
-      try {
-          const result = await updateEntryFormService(eventId, form_schema);
-          if (result.affectedRows === 0) {
-              return res.status(400).json({ status: false, message: 'No entry form found for this event or form was deleted' });
-          }
-          return res.status(200).json({ status: true, message: 'Entry form updated successfully' });
-      } catch (error) {
-          return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
-      }
-  };
-  
+// Update Registration Form
+export const updateRegistrationForm = async (req, res) => {
+  const { eventId } = req.params;
+  const { form_schema } = req.body;
+
+  if (!form_schema) {
+    return res.status(400).json({ status: false, message: 'form_schema is required' });
+  }
+
+  try {
+    const result = await updateRegistrationFormService(eventId, form_schema);
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ status: false, message: 'No registration form found for this event or form was deleted' });
+    }
+    return res.status(200).json({ status: true, message: 'Registration form updated successfully' });
+  } catch (error) {
+    return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+  }
+};
+
+// Create Entry Form
+export const createEntryForm = async (req, res) => {
+  const { eventId, form_schema } = req.body;
+
+  if (!form_schema) {
+    return res.status(400).json({ status: 'failure', message: 'Form schema is required' });
+  }
+
+  try {
+    const result = await createEntryFormService(eventId, form_schema);
+    return res.status(200).json({ status: 'success', message: 'Entry form created successfully', id: result.insertId });
+  } catch (error) {
+    return res.status(500).json({ status: 'failure', message: error.message });
+  }
+};
+
+// Get Entry Form by Event ID
+export const getEntryFormByEventId = async (req, res) => {
+  const { eventId } = req.params;
+
+  try {
+    const result = await getEntryFormService(eventId);
+    if (result.length === 0) {
+      return res.status(400).json({ status: false, message: 'No Entry form found for this event' });
+    }
+    return res.status(200).json({ status: true, message: 'Entry form fetched successfully', data: result[0] });
+  } catch (error) {
+    return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+  }
+};
+
+// Update Entry Form
+export const updateEntryForm = async (req, res) => {
+  const { eventId } = req.params;
+  const { form_schema } = req.body;
+
+  if (!form_schema) {
+    return res.status(400).json({ status: false, message: 'form_schema is required' });
+  }
+
+  try {
+    const result = await updateEntryFormService(eventId, form_schema);
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ status: false, message: 'No entry form found for this event or form was deleted' });
+    }
+    return res.status(200).json({ status: true, message: 'Entry form updated successfully' });
+  } catch (error) {
+    return res.status(400).json({ status: false, message: error.message || 'Internal server error occurred' });
+  }
+};
