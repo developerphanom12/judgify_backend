@@ -76,7 +76,7 @@ router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGen
 
 
 
-//----------------------------------------- draft to live or archive ----------------------------------------------//
+//--------------------------------------- draft to live or archive -----------------------------------------//
 
 router.post('/toLive', authenticate, ValidateEventLive, EventLive)
 
@@ -97,7 +97,7 @@ router.post('/scoreCardUpdate', authenticate, ValidateScoreCardUpdate, Scorecard
 router.delete('/deleteScoreCard/:id', authenticate, deleteScoreCard)
 
 
-//----------------------------------------- Jury group Create ----------------------------------------------//
+//--------------------------------------- Jury group Create --------------------------------------------//
 
 router.post('/assignJury', authenticate, ValidateAssignJuryCreate, AssignJuryCreate)
 

@@ -770,7 +770,7 @@ export async function newPasswordd({ userId, currentPassword, newPassword }) {
   }
 }
 
-export function getMyEvents(skip, limit, id, sortOrder = 'newest') {
+export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
   return new Promise((resolve, reject) => {
     const countQuery = `
       SELECT COUNT(*) as totalCount
@@ -802,9 +802,9 @@ export function getMyEvents(skip, limit, id, sortOrder = 'newest') {
       `;
 
       if (sortOrder === 'newest') {
-        query += ` ORDER BY a.created_at DESC`;
-      } else if (sortOrder === 'oldest') {
         query += ` ORDER BY a.created_at ASC`;
+      } else if (sortOrder === 'oldest') {
+        query += ` ORDER BY a.created_at  DESC`;
       }
 
       query += ` LIMIT ? OFFSET ?`;
