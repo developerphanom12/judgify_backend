@@ -114,11 +114,11 @@ export async function createEvent(
   }
 }
 
-export function additional_emailssss(eventId, additional_email) {
+export function additional_emailssss(eventId, additonal_email) {
   return new Promise((resolve, reject) => {
-    // Check if additional_email is an array, otherwise default to empty array
-    if (!Array.isArray(additional_email)) {
-      return reject(new Error("additional_email must be an array"));
+    // Check if additonal_email is an array, otherwise default to empty array
+    if (!Array.isArray(additonal_email)) {
+      return reject(new Error("additonal_email must be an array"));
     }
 
     const insertSql = `
@@ -126,7 +126,7 @@ export function additional_emailssss(eventId, additional_email) {
       VALUES (?, ?)
     `;
 
-    const queries = additional_email.map((email) => {
+    const queries = additonal_email.map((email) => {
       return new Promise((res, rej) => {
         // You can also add validation for email here (e.g., format check)
         db.query(insertSql, [eventId, email], (error, result) => {
@@ -180,12 +180,12 @@ export function industry_types(eventId, industry_types) {
 }
 
 
+
 export const updateEventDetails = async (eventId, updates) => {
-  // Building the SET clause dynamically
   let setClauses = [];
   let values = [];
 
-  // Only add fields that are provided
+  // Dynamically build the SQL query based on the provided updates
   if (updates.event_name !== undefined) {
     setClauses.push("event_name = ?");
     values.push(updates.event_name);
@@ -218,9 +218,9 @@ export const updateEventDetails = async (eventId, updates) => {
     setClauses.push("is_withdrawal = ?");
     values.push(updates.is_withdrawal);
   }
-  if (updates.is_edit_entry !== undefined) {
+  if (updates.is_ediit_entry !== undefined) {
     setClauses.push("is_ediit_entry = ?");
-    values.push(updates.is_edit_entry);
+    values.push(updates.is_ediit_entry);
   }
   if (updates.limit_submission !== undefined) {
     setClauses.push("limit_submission = ?");
@@ -231,24 +231,20 @@ export const updateEventDetails = async (eventId, updates) => {
     values.push(updates.submission_limit);
   }
 
-  // Add the eventId for the WHERE clause
   values.push(eventId);
 
-  // If no fields are to be updated, reject with an error
   if (setClauses.length === 0) {
     return Promise.reject({
       message: "No valid fields to update",
     });
   }
 
-  // Combine the SET clauses into the final SQL query
   const updateSql = `
     UPDATE event_details
     SET ${setClauses.join(', ')}
     WHERE id = ?
   `;
 
-  // Execute the update query
   return new Promise((resolve, reject) => {
     db.query(updateSql, values, (updateError, result) => {
       if (updateError) {
@@ -262,7 +258,7 @@ export const updateEventDetails = async (eventId, updates) => {
       if (result.affectedRows === 0) {
         return reject({
           message: "No event found with the given ID",
-          eventId: eventId,
+          eventId,
         });
       }
 
@@ -272,129 +268,135 @@ export const updateEventDetails = async (eventId, updates) => {
 };
 
 
+
 export const updateAdditionalEmails = async (eventId, additionalEmails) => {
+  // Ensure additionalEmails is an array
   const emails = Array.isArray(additionalEmails) ? additionalEmails : [additionalEmails];
 
   if (emails.length === 0) {
     return Promise.reject(new Error("No valid additional emails to update"));
   }
 
-  let setClauses = [];
-  let values = [];
+  // Build the SQL query dynamically using multiple individual updates
+  const updatePromises = emails.map(({ email, emailId }) => {
+    // Ensure that both email and emailId are provided
+    if (!emailId || !email) {
+      return Promise.reject(new Error("Missing email or emailId"));
+    }
 
-  emails.forEach(email => {
-    setClauses.push("additional_email = ?");
-    values.push(email);
-  });
+    // SQL query to update the email for a given emailId and eventId
+    const updateSql = `
+      UPDATE additional_emails
+      SET additonal_email = ?
+      WHERE eventId = ? AND id = ?
+    `;
 
-  values.push(eventId);
+    const values = [email, eventId, emailId];
 
-  if (setClauses.length === 0) {
-    return Promise.reject(new Error("No valid additional emails to update"));
-  }
+    return new Promise((resolve, reject) => {
+      db.query(updateSql, values, (updateErr, updateResult) => {
+        if (updateErr) {
+          console.error("Error updating additional emails:", updateErr);
+          return reject({
+            message: "Failed to update additional emails",
+            error: updateErr,
+          });
+        }
 
-  const updateSql = `
-    UPDATE additional_emails
-    SET ${setClauses.join(', ')}
-    WHERE eventId = ? AND additional_email IN (?${',?'.repeat(emails.length - 1)})
-  `;
+        // If no rows were updated, return an error
+        if (updateResult.affectedRows === 0) {
+          console.warn(`No email found to update for emailId ${emailId}`);
+          return reject({
+            message: "No matching email found to update",
+            eventId,
+            emailId,
+          });
+        }
 
-  return new Promise((resolve, reject) => {
-    db.query(updateSql, [...values, ...emails], (updateErr, updateResult) => {
-      if (updateErr) {
-        return reject({
-          message: "Failed to update additional emails",
-          error: updateErr,
-        });
-      }
-
-      if (updateResult.affectedRows === 0) {
-        return reject({
-          message: "No matching emails found to update",
-          eventId: eventId,
-        });
-      }
-
-      resolve({
-        status: 'updated',
-        updatedEmails: emails,
+        resolve(updateResult);
       });
     });
   });
+
+  // Wait for all the email updates to be completed
+  return Promise.all(updatePromises)
+    .then((results) => {
+      return {
+        status: 'updated',
+        updatedEmails: emails, // Include the emails that were successfully updated
+      };
+    })
+    .catch((error) => {
+      console.error("Error in updating emails:", error);
+      return Promise.reject(new Error("Failed to update some emails"));
+    });
 };
 
 
-// Industry Types Update Function
+
+
 export const updateIndustryTypes = async (eventId, industryTypes) => {
+  // Ensure industryTypes is an array
   const types = Array.isArray(industryTypes) ? industryTypes : [industryTypes];
 
+  // Check if there are no industry types to update
   if (types.length === 0) {
     return Promise.reject(new Error("No valid industry types to update"));
   }
 
-  const updateQuery = `
-    UPDATE industry_types
-    SET industry_type = ?
-    WHERE eventId = ? AND industry_type = ?
-  `;
+  // Build an array of update promises for each industry type and its associated industry_type_id
+  const updatePromises = types.map(({ industry_type, industry_type_id }) => {
+    // Ensure that both industry_type and industry_type_id are provided
+    if (!industry_type || !industry_type_id) {
+      return Promise.reject(new Error("Missing industry_type or industry_type_id"));
+    }
 
-  const insertQuery = `
-    INSERT INTO industry_types (eventId, industry_type)
-    SELECT ?, ?
-    WHERE NOT EXISTS (
-      SELECT 1 FROM industry_types
-      WHERE eventId = ? AND industry_type = ?
-    )
-  `;
+    // SQL query to update the industry_type for a given eventId and industry_type_id
+    const updateSql = `
+      UPDATE industry_types
+      SET industry_type = ?
+      WHERE eventId = ? AND industry_type_id = ?
+    `;
 
-  const queries = types.map((industryType) => {
-    return new Promise((res, rej) => {
-      db.query(updateQuery, [industryType, eventId, industryType], (updateErr, updateResult) => {
+    const values = [industry_type, eventId, industry_type_id];
+
+    return new Promise((resolve, reject) => {
+      db.query(updateSql, values, (updateErr, updateResult) => {
         if (updateErr) {
-          return rej({
-            message: "Failed to update industry type",
-            industryType: industryType,
-            error: updateErr
+          console.error("Error updating industry types:", updateErr);
+          return reject({
+            message: "Failed to update industry types",
+            error: updateErr,
           });
         }
 
+        // If no rows were updated, log a warning and reject the promise
         if (updateResult.affectedRows === 0) {
-          db.query(insertQuery, [eventId, industryType, eventId, industryType], (insertErr, insertResult) => {
-            if (insertErr) {
-              return rej({
-                message: "Failed to insert industry type",
-                industryType: industryType,
-                error: insertErr
-              });
-            }
-
-            if (insertResult.affectedRows === 0) {
-              return rej({
-                message: "Industry type insertion failed",
-                industryType: industryType,
-                eventId: eventId
-              });
-            }
-
-            res({
-              industryType: industryType,
-              status: 'inserted'
-            });
-          });
-        } else {
-          res({
-            industryType: industryType,
-            status: 'updated'
+          console.warn(`No industry type found to update for eventId ${eventId} and industry_type_id ${industry_type_id}`);
+          return reject({
+            message: "No matching industry type found to update",
+            eventId,
+            industry_type_id,
           });
         }
+
+        // Resolve if the update is successful
+        resolve(updateResult);
       });
     });
   });
 
-  return Promise.all(queries)
-    .then((updatedTypes) => updatedTypes)
+  // Wait for all the industry type updates to be completed
+  return Promise.all(updatePromises)
+    .then((results) => {
+      return {
+        status: 'updated',
+        updatedIndustryTypes: types, // Include the industry types that were successfully updated
+      };
+    })
     .catch((error) => {
+      // Log the error if any of the industry type updates fail
       console.error("Error in updating industry types:", error);
-      throw error;
+      return Promise.reject(new Error("Failed to update some industry types"));
     });
 };

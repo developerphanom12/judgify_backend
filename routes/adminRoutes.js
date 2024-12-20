@@ -1,6 +1,6 @@
 import express from "express"
-import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, createEntryForm, CreateGeneralSettings, createRegistrationForm, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, EventArchive, eventCreate, EventLive, eventUpdate, eventupdateSocial, exportCsv,  getEntryFormByEventId,  getRegistrationFormByEventId,  juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, SearchEvent, sendOTP, SubmissionFormatCreate, updateEntryForm, updateforgetPassword, updateProfile, updateRegistrationForm, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
-import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateEventLive, ValidateEventArchive, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory } from '../validation/AdminValidation.js'
+import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, createEntryForm, CreateGeneralSettings, createRegistrationForm, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, eventCreate,  EventStatus,  eventUpdate, eventupdateSocial, exportCsv, getEntryFormByEventId, getRegistrationFormByEventId, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, SearchEvent, sendOTP, SubmissionFormatCreate, updateEntryForm, updateforgetPassword, updateProfile, updateRegistrationForm, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
+import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory, validateRegistartionForm, validateRegistartionFormGet, validateRegistartionFormUpdate, validateEntryForm, validateEntryFormGet, validateEntryFormUpdate, ValidateEventStatus } from '../validation/AdminValidation.js'
 import authenticate from '../middleware/authentication.js'
 import upload from '../middleware/multer.js'
 
@@ -14,7 +14,7 @@ router.post('/register', validateAdmin, usercreate)//* --------  DONE
 
 router.post('/login', validateAdminLogin, loginseller)//* --------  DONE
 
-router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//* --------  DONE
+router.post('/profileUpdate', authenticate, upload.single('profile_image'), updateProfile)//* ------  DONE
 
 router.post('/send_otp', validateotp, sendOTP)//* --------  DONE
 
@@ -26,11 +26,11 @@ router.post('/updateForgetPassword', validateupdateForgetPassword, updateforgetP
 
 router.get('/getprofile', authenticate, AdminProfileget)//* --------  DONE
 
-router.get('/allAwards', authenticate,validatefilterCategory, Awardsget)//* --------  DONE
+router.get('/allAwards', authenticate, validatefilterCategory, Awardsget)//* --------  DONE
 
 router.post('/newPassword', authenticate, validateNewPass, NewPassword)//* --------  DONE
 
-//----------------------------------------- dashboard events ----------------------------------------------//
+//--------------------------------------- dashboard events ----------------------------------------------//
 
 router.get('/dashboardEvents', authenticate, dashboardEvents)//* --------  DONE
 
@@ -38,7 +38,8 @@ router.get('/MyEvents', authenticate, MyEventsget)//* --------  DONE
 
 //----------------------------------------- Create Event ----------------------------------------------//
 
-router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate)//* --------  DONE
+router.post('/createEvent', authenticate, upload.fields([{ name: 'event_logo', maxCount: 1 }, { name: 'event_banner', maxCount: 1 }]), eventCreate)//& validation pending 
+//* --------  DONE
 
 router.post('/awardCategory', authenticate, validateAwardCreate, awardCreate)//* --------  DONE
 
@@ -54,8 +55,7 @@ router.get('/awardget/:awardId', authenticate, AwardByIdget)//* --------  DONE
 
 //----------------------------------------- Update Event ----------------------------------------------//
 
-router.get('/getEvent/:eventId', authenticate, MyEventget)//& Ok tested
-//^-------------Second modal 
+router.get('/getEvent/:eventId', authenticate, MyEventget)//* --------  DONE  
 
 router.post('/updateCreateEvent', authenticate, validateUpdateEventCreate, eventUpdate)//& Ok tested
 //^-------------Second modal 
@@ -66,24 +66,20 @@ router.post('/updateEventSocial', authenticate, upload.fields([{ name: 'event_lo
 router.post('/submissionIDformat', authenticate, ValidateSubmissionIDformat, SubmissionFormatCreate)//& Ok tested
 //^-------------Second modal
 
-router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)//& Ok tested
-// ^-------------Second modal
+router.post('/awardDirectory', authenticate, ValidateAwardDirectory, visiblePublicly)//* --------  DONE
 
-router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//& Ok tested
-//^-------------Second modal 
+router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//* --------  DONE 
 
 //--------------------------------------- draft to live or archive -----------------------------------------//
 
-router.post('/toLive', authenticate, ValidateEventLive, EventLive)
-
-router.post('/toArchive', authenticate, ValidateEventArchive, EventArchive)
+router.post('/eventStatus', authenticate, ValidateEventStatus, EventStatus)
 
 //----------------------------------------- Manage Jury ----------------------------------------------//
 
 router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGeneralSettings)
 
 //----------------------------------------- ScoreCard Create ----------------------------------------------//
- 
+
 router.post('/scorecardCreate', authenticate, ValidateScoreCardCriteria, ScorecardCreate)
 
 router.post('/criteriaSettingCreate', authenticate, ValidateCriteriaSettingsCreate, CriteriaSettingCreate)
@@ -116,14 +112,18 @@ router.delete('/JuryCriteriaDelete/:id', authenticate, deleteGroupCriteria)
 //----------------------------------------- dynamic forms ----------------------------------------------//
 
 // Registration Form Routes 
-router.post('/registrationForm', createRegistrationForm);
-router.get('/registrationForm', getRegistrationFormByEventId);
-router.put('/registrationForm/:eventId', updateRegistrationForm);
+router.post('/registrationForm', authenticate, validateRegistartionForm, createRegistrationForm);
+
+router.get('/registrationForm', authenticate, validateRegistartionFormGet, getRegistrationFormByEventId);
+
+router.put('/registrationFormUp', authenticate, validateRegistartionFormUpdate, updateRegistrationForm);
 
 // Entry Form Routes
-router.post('/entryForm/', createEntryForm);
-router.get('/entryForm/:eventId', getEntryFormByEventId);
-router.put('/entryForm/:eventId', updateEntryForm);
+router.post('/entryForm',authenticate, validateEntryForm,createEntryForm);
+
+router.get('/entryForm',authenticate,validateEntryFormGet, getEntryFormByEventId); 
+
+router.put('/entryForm',authenticate,validateEntryFormUpdate, updateEntryForm);
 
 //----------------------------------------- with the 5000 port  ----------------------------------------------//
 
@@ -194,6 +194,5 @@ router.put('/Submission-form/:id', (req, res) => {
         res.send({ message: 'Submission form updated successfully' });
     });
 });
-
 
 export default router

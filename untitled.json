@@ -1,64 +1,68 @@
-[
-    {
+{ "eventId": "127",
+    "form_schema": [
+      {
         "type": "text",
         "label": "First Name",
-        "visible": true,
-        "dataName": "firstName-1734177166518",
+        "dataName": "firstName-1734588181902",
+        "placeholder": "Enter first name...",
         "required": true,
-        "isDefault": true,
-        "placeholder": "Enter first name..."
-    },
-    {
+        "visible": true,
+        "isDefault": true
+      },
+      {
         "type": "text",
         "label": "Last Name",
-        "visible": true,
-        "dataName": "lastName-1734177166518",
+        "dataName": "lastName-1734588181902",
+        "placeholder": "Enter last name...",
         "required": true,
-        "isDefault": true,
-        "placeholder": "Enter last name..."
-    },
-    {
+        "visible": true,
+        "isDefault": true
+      },
+      {
         "type": "email",
         "label": "Email",
-        "visible": true,
-        "dataName": "email-1734177166518",
+        "dataName": "email-1734588181902",
+        "placeholder": "Enter email...",
         "required": true,
-        "isDefault": true,
-        "placeholder": "Enter email..."
-    },
-    {
+        "visible": true,
+        "isDefault": true
+      },
+      {
         "type": "country",
         "label": "Country",
+        "dataName": "country-1734588181902",
         "options": [
-            "USA",
-            "India",
-            "Canada"
+          "USA",
+          "India",
+          "Canada"
         ],
-        "visible": true,
-        "dataName": "country-1734177166518",
         "required": true,
-        "isDefault": true
-    },
-    {
-        "type": "radio",
-        "label": "Radio Button",
-        "options": [
-            "Option 1",
-            "Option 2"
-        ],
         "visible": true,
-        "dataName": "radio-1734177349919",
-        "isRequired": true,
-        "isVisibleIf": false,
-        "renderlabel": "Last Name",
+        "isDefault": true
+      },
+      {
+        "type": "textarea",
+        "label": "Paragraph Text",
+        "dataName": "textarea-1734588189996",
+        "charLimitRequired": false,
+        "wordLimitRequired": false,
+        "charLimit": "",
+        "wordLimit": "",
+        "fieldSize": "100%",
+        "options": [],
         "includeOther": false,
+        "isRequired": true,
         "isRequiredIf": true,
-        "renderDataName": "lastName-1734177166518",
-        "visibleCondition": "Equals (Default)",
+        "requiredFieldValue": "fffff",
         "requiredCondition": "Equals (Default)",
+        "requiredConditionValue": "",
+        "visible": true,
+        "isVisibleIf": false,
         "visibleFieldValue": "",
-        "requiredFieldValue": "cdccdcd",
+        "visibleCondition": "Equals (Default)",
         "visibleConditionValue": "",
-        "requiredConditionValue": ""
-    }
-]
+        "renderlabel": "Last Name",
+        "renderDataName": "lastName-1734588181902"
+      }
+    ]
+  }

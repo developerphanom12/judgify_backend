@@ -120,93 +120,131 @@ export const eventCreate = async (req, res) => {
 };
 
 export const eventUpdate = async (req, res) => {
+  const { role } = req.user;
+
+  // Check if user is an admin
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successTrue,
+      message: resposne.unauth,
+    });
+  }
+
+  const { eventId, additional_email, industry_type, ...eventUpdates } = req.body;
+
+  // Check if eventId exists
+  const eventExists = await checkeventId(eventId);
+  if (!eventExists) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: "resposne.eventIdfail",
+    });
+  }
+
   try {
-    const { role } = req.user;
+    // Prepare updates object dynamically
+    const updates = {};
 
-    if (role !== "admin") {
+    if (eventUpdates.event_name) updates.event_name = eventUpdates.event_name;
+    if (eventUpdates.closing_date) updates.closing_date = eventUpdates.closing_date;
+    if (eventUpdates.closing_time) updates.closing_time = eventUpdates.closing_time;
+    if (eventUpdates.email) updates.email = eventUpdates.email;
+    if (eventUpdates.event_url) updates.event_url = eventUpdates.event_url;
+    if (eventUpdates.time_zone) updates.time_zone = eventUpdates.time_zone;
+    if (eventUpdates.is_endorsement) updates.is_endorsement = eventUpdates.is_endorsement;
+    if (eventUpdates.is_withdrawal) updates.is_withdrawal = eventUpdates.is_withdrawal;
+    if (eventUpdates.is_ediit_entry) updates.is_ediit_entry = eventUpdates.is_ediit_entry;
+    if (eventUpdates.limit_submission) updates.limit_submission = eventUpdates.limit_submission;
+    if (eventUpdates.submission_limit) updates.submission_limit = eventUpdates.submission_limit;
+
+    // Handle additional email and industry type updates
+    if (additional_email && additional_email.length > 0) updates.additional_email = additional_email;
+    if (industry_type && industry_type.length > 0) updates.industry_type = industry_type;
+
+    // Check if there are no updates to be made
+    if (Object.keys(updates).length === 0) {
       return res.status(400).json({
-        status: false,
-        message: "Unauthorized access"
-      });
-    }
-
-    const { 
-      eventId, 
-      additional_email, 
-      industry_type,
-      ...eventUpdates 
-    } = req.body;
-
-    const eventExists = await checkeventId(eventId);
-    if (!eventExists) {
-      return res.status(400).json({
-        status: false,
-        message: "Event not found"
+        status: resposne.successFalse,
+        message: "resposne.nodataupdate",
       });
     }
 
     const updatePromises = [];
 
-    if (Object.keys(eventUpdates).length > 0) {
+    // Add event details update to promises
+    if (Object.keys(updates).length > 0) {
       updatePromises.push(
-        updateEventDetails(eventId, eventUpdates)
-          .catch(error => {
-            console.error('Event Details Update Error:', error);
-            throw new Error(`Event details update failed: ${error.message}`);
-          })
+        updateEventDetails(eventId, updates).catch((error) => {
+          // Log the error message before throwing it
+          console.error("Error updating event details:", error);
+    
+          throw {
+            status: resposne.successFalse,
+            message: "resposne.novalidfield",
+            ermessage: error.message, // Ensure the error message is captured properly
+          };
+        })
       );
     }
-
+    
+    // Handle additional emails update if provided
     if (additional_email && additional_email.length > 0) {
       updatePromises.push(
-        updateAdditionalEmails(eventId, additional_email)
-          .catch(error => {
-            console.error('Additional Emails Update Error:', error);
-            throw new Error(`Additional emails update failed: ${error.message}`);
-          })
+        updateAdditionalEmails(eventId, additional_email).catch((error) => {
+          throw {
+            status: resposne.successFalse,
+            message: error.message,
+          };
+        })
       );
     }
 
+    // Handle industry types update if provided
     if (industry_type && industry_type.length > 0) {
       updatePromises.push(
-        updateIndustryTypes(eventId, industry_type)
-          .catch(error => {
-            console.error('Industry Types Update Error:', error);
-            throw new Error(`Industry types update failed: ${error.message}`);
-          })
+        updateIndustryTypes(eventId, industry_type).catch((error) => {
+          throw {
+            status: resposne.successFalse,
+            message: error.message,
+          };
+        })
       );
     }
 
+    // Ensure that at least one update is performed
     if (updatePromises.length === 0) {
       return res.status(400).json({
-        status: false,
-        message: "No updates provided"
+        status: resposne.successFalse,
+        message: "error.message",
       });
     }
+
+    // Wait for all promises to complete
     await Promise.all(updatePromises);
 
+    // Prepare the updated fields for resposne
     const updatedFields = [
-      ...Object.keys(eventUpdates),
+      ...Object.keys(updates),
       ...(additional_email ? ['additional_email'] : []),
-      ...(industry_type ? ['industry_type'] : [])
+      ...(industry_type ? ['industry_type'] : []),
     ];
 
     return res.status(200).json({
-      status: true,
-      message: "Event updated successfully",
-      data: {
-        eventId,
-        updatedFields
-      }
+      status: resposne.successTrue,
+      message: "resposne.eventUpdateSuccess",
+      data: { eventId, updatedFields },
     });
 
   } catch (error) {
     console.error('Event Update Unexpected Error:', error);
 
     return res.status(400).json({
-      status: false,
-   message: error.message 
+      status: resposne.successFalse,
+      message: error.message,
     });
   }
 };
+
+
+
 

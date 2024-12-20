@@ -1,13 +1,13 @@
-import db from "../database/connection.js"
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import dotenv from "dotenv"
-const saltRounds = 10
-import ExcelJS from 'exceljs'
-import resposne from "../middleware/resposne.js"
-import { resolve } from "path"
-import { error } from "console"
-dotenv.config()
+import db from "../database/connection.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+const saltRounds = 10;
+import ExcelJS from "exceljs";
+import resposne from "../middleware/resposne.js";
+import { resolve } from "path";
+import { error } from "console";
+dotenv.config();
 
 export function adminRegister(
   first_name,
@@ -16,79 +16,88 @@ export function adminRegister(
   password,
   company,
   mobile_number,
-  country) {
+  country
+) {
   return new Promise((resolve, reject) => {
     const insertSql = `
       INSERT INTO admin (first_name,last_name, email, password,company, mobile_number,country) 
       VALUES (?, ?, ?, ?, ?, ? ,?)
-    `
+    `;
 
-    const values = [first_name, last_name, email, password, company, mobile_number, country]
+    const values = [
+      first_name,
+      last_name,
+      email,
+      password,
+      company,
+      mobile_number,
+      country,
+    ];
 
     db.query(insertSql, values, (error, result) => {
       if (error) {
-        reject(error)
+        reject(error);
       } else {
-        const userId = result.insertId
+        const userId = result.insertId;
         if (userId) {
-          resolve(userId)
+          resolve(userId);
         } else {
-          reject(new Error(resposne.adminfailed))
+          reject(new Error(resposne.adminfailed));
         }
       }
-    })
-  })
+    });
+  });
 }
 
 export function checkemail(email) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE email = ?"
+    const query = "SELECT * FROM admin WHERE email = ?";
     db.query(query, [email], (err, results) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
-        resolve(results.length > 0 ? true : false)
+        resolve(results.length > 0 ? true : false);
       }
-    })
-  })
+    });
+  });
 }
 
 export function checkphone(mobile_number) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE mobile_number = ?"
+    const query = "SELECT * FROM admin WHERE mobile_number = ?";
     db.query(query, [mobile_number], (err, results) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
-        resolve(results.length > 0 ? true : false)
+        resolve(results.length > 0 ? true : false);
       }
-    })
-  })
+    });
+  });
 }
 
 export function loginAdmin(email, password) {
-  const userQuery = "SELECT * FROM admin WHERE email = ?"
+  const userQuery = "SELECT * FROM admin WHERE email = ?";
 
   return new Promise((resolve, reject) => {
     db.query(userQuery, [email], async (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
 
       if (results.length === 0) {
-        return resolve({ error: resposne.invaliduser })
+        return resolve({ error: resposne.invaliduser });
       }
 
-      const user = results[0]
+      const user = results[0];
 
       if (!password || !user.password) {
-        return resolve({ error: resposne.missingPass })
+        return resolve({ error: resposne.missingPass });
       }
 
-      const passwordMatch = await bcrypt.compare(password, user.password)
+      const passwordMatch = await bcrypt.compare(password, user.password);
 
       if (!passwordMatch) {
-        return resolve({ error: resposne.invalidpassword })
+        return resolve({ error: resposne.invalidpassword });
       }
 
       db.query([email], () => {
@@ -101,8 +110,8 @@ export function loginAdmin(email, password) {
             role: user.role,
           },
           process.env.JWT_SECRET
-        )
-        console.log(token)
+        );
+        console.log(token);
         resolve({
           data: {
             id: user.id,
@@ -112,197 +121,193 @@ export function loginAdmin(email, password) {
             role: user.role,
             token: token,
           },
-        })
-      })
-    })
-  })
+        });
+      });
+    });
+  });
 }
 
 export const updateprofile = (updates, userId) => {
   return new Promise((resolve, reject) => {
-    const updateFields = []
-    const updateValues = []
+    const updateFields = [];
+    const updateValues = [];
 
     if (updates.first_name) {
-      updateFields.push('first_name = ?')
-      updateValues.push(updates.first_name)
+      updateFields.push("first_name = ?");
+      updateValues.push(updates.first_name);
     }
     if (updates.last_name) {
-      updateFields.push('last_name = ?')
-      updateValues.push(updates.last_name)
+      updateFields.push("last_name = ?");
+      updateValues.push(updates.last_name);
     }
     if (updates.email) {
-      updateFields.push('email = ?')
-      updateValues.push(updates.email)
+      updateFields.push("email = ?");
+      updateValues.push(updates.email);
     }
     if (updates.company) {
-      updateFields.push('company = ?')
-      updateValues.push(updates.company)
+      updateFields.push("company = ?");
+      updateValues.push(updates.company);
     }
     if (updates.mobile_number) {
-      updateFields.push('mobile_number = ?')
-      updateValues.push(updates.mobile_number)
+      updateFields.push("mobile_number = ?");
+      updateValues.push(updates.mobile_number);
     }
     if (updates.time_zone) {
-      updateFields.push('time_zone = ?')
-      updateValues.push(updates.time_zone)
+      updateFields.push("time_zone = ?");
+      updateValues.push(updates.time_zone);
     }
     if (updates.job_title) {
-      updateFields.push('job_title = ?')
-      updateValues.push(updates.job_title)
+      updateFields.push("job_title = ?");
+      updateValues.push(updates.job_title);
     }
     if (updates.imageFilename) {
-      updateFields.push('profile_image = ?')
-      updateValues.push(updates.imageFilename)
+      updateFields.push("profile_image = ?");
+      updateValues.push(updates.imageFilename);
     }
 
     if (updateFields.length === 0) {
-      return reject(new Error(resposne.novalidfield))
+      return reject(new Error(resposne.novalidfield));
     }
 
     const updateSql = `
       UPDATE admin
-      SET ${updateFields.join(', ')}
+      SET ${updateFields.join(", ")}
       WHERE id = ?
-    `
+    `;
 
     db.query(updateSql, [...updateValues, userId], (error, result) => {
       if (error) {
-        return reject(error)
+        return reject(error);
       }
 
       if (result.affectedRows > 0) {
-        resolve(true)
+        resolve(true);
       } else {
-        resolve(false)
+        resolve(false);
       }
-    })
-  })
-}
+    });
+  });
+};
 
 export function generateOTP() {
-  let OTP = "123456"
-  return OTP
+  let OTP = "123456";
+  return OTP;
 }
 
 export function storeOTP(email, otp) {
   return new Promise((resolve, reject) => {
     const deleteSql = `
       DELETE FROM admin_otp WHERE email = ?
-    `
+    `;
     const insertSql = `
       INSERT INTO admin_otp (email, otp)
       VALUES (?, ?)
-    `
+    `;
     db.beginTransaction((err) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
 
       db.query(deleteSql, [email], (error) => {
         if (error) {
           return db.rollback(() => {
-            reject(error)
-          })
+            reject(error);
+          });
         }
 
         db.query(insertSql, [email, otp], (error, result) => {
           if (error) {
             return db.rollback(() => {
-              reject(error)
-            })
+              reject(error);
+            });
           }
 
           db.commit((err) => {
             if (err) {
               return db.rollback(() => {
-                reject(err)
-              })
+                reject(err);
+              });
             }
 
-            const successMessage = resposne.otpsend
-            resolve(successMessage)
-          })
-        })
-      })
-    })
-  })
+            const successMessage = resposne.otpsend;
+            resolve(successMessage);
+          });
+        });
+      });
+    });
+  });
 }
 
 export function verifyOTP(email, otp) {
   return new Promise((resolve, reject) => {
     const selectSql = `
       SELECT * FROM admin_otp WHERE email = ? AND otp = ?
-    `
+    `;
     const updateSql = `
       UPDATE admin_otp SET is_verified = 1 WHERE email = ? AND otp = ?
-    `
+    `;
 
     db.query(selectSql, [email, otp], (error, results) => {
       if (error) {
-        reject(error)
+        reject(error);
       } else if (results.length === 0) {
-        reject(new Error(resposne.invalidOtp))
+        reject(new Error(resposne.invalidOtp));
       } else {
-        db.query(
-          updateSql,
-          [email, otp],
-          (updateError, updateResult) => {
-            if (updateError) {
-              reject(updateError)
-            } else {
-              resolve(resposne.otpverified)
-            }
+        db.query(updateSql, [email, otp], (updateError, updateResult) => {
+          if (updateError) {
+            reject(updateError);
+          } else {
+            resolve(resposne.otpverified);
           }
-        )
+        });
       }
-    })
-  })
+    });
+  });
 }
 
 export function checkemailOtp(email) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE email = ?"
+    const query = "SELECT * FROM admin WHERE email = ?";
     db.query(query, [email], (err, results) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
-        resolve(results.length > 0 ? true : false)
+        resolve(results.length > 0 ? true : false);
       }
-    })
-  })
+    });
+  });
 }
 
 export async function changeforgetPassword({ email, newPassword }) {
   return new Promise((resolve, reject) => {
     const selectSql =
-      "SELECT * FROM admin_otp WHERE email = ? AND is_verified = 1"
-    const updateSql = "UPDATE admin SET password = ? WHERE email = ?"
+      "SELECT * FROM admin_otp WHERE email = ? AND is_verified = 1";
+    const updateSql = "UPDATE admin SET password = ? WHERE email = ?";
 
     db.query(selectSql, [email], async (error, results) => {
       if (error) {
-        return reject(error)
+        return reject(error);
       }
 
       if (results.length === 0) {
-        return reject(new Error(resposne.otpnotverified))
+        return reject(new Error(resposne.otpnotverified));
       }
 
       try {
-        const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
         db.query(updateSql, [hashedPassword, email], (updateError) => {
           if (updateError) {
-            return reject(updateError)
+            return reject(updateError);
           }
 
-          resolve(resposne.passChanged)
-        })
+          resolve(resposne.passChanged);
+        });
       } catch (hashError) {
-        reject(hashError)
+        reject(hashError);
       }
-    })
-  })
+    });
+  });
 }
 
 export function checkeventEmail(email) {
@@ -310,7 +315,9 @@ export function checkeventEmail(email) {
     const query = "SELECT * FROM event_details WHERE email = ?";
     db.query(query, [email], (err, results) => {
       if (err) {
-        return reject(new Error("Database query error while checking event's email"));
+        return reject(
+          new Error("Database query error while checking event's email")
+        );
       }
       resolve(results.length > 0);
     });
@@ -382,14 +389,16 @@ export async function createEvent(
     event_logo,
     event_banner,
     event_description,
-    submission_limit
+    submission_limit,
   ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Error inserting event: ${insertError.message}`));
+          return reject(
+            new Error(`Error inserting event: ${insertError.message}`)
+          );
         }
         if (result.insertId) {
           resolve(result.insertId);
@@ -401,7 +410,7 @@ export async function createEvent(
 
     return {
       id: result,
-      inserId:result.insertId,
+      inserId: result.insertId,
       message: resposne.createvent, // Assuming response is defined elsewhere
     };
   } catch (error) {
@@ -410,14 +419,13 @@ export async function createEvent(
   }
 }
 
-
 export function additional_emailssss(eventId, additionalEmails) {
   return new Promise((resolve, reject) => {
     // Validate that additionalEmails is an array
     if (!Array.isArray(additionalEmails)) {
       const error = new Error("additionalEmails must be an array");
       console.log("Error in additional_emailssss: ", error.message);
-      return reject(error);  // Reject the promise if the data is invalid
+      return reject(error); // Reject the promise if the data is invalid
     }
 
     const insertSql = `INSERT INTO additional_emails (eventId, additonal_email) VALUES (?, ?)`;
@@ -442,11 +450,10 @@ export function additional_emailssss(eventId, additionalEmails) {
 
 export function industry_types(eventId, industryTypes) {
   return new Promise((resolve, reject) => {
-    // Validate that industryTypes is an array
     if (!Array.isArray(industryTypes)) {
       const error = new Error("industryTypes must be an array");
       console.log("Error in industry_types: ", error.message);
-      return reject(error);  // Reject the promise if the data is invalid
+      return reject(error); // Reject the promise if the data is invalid
     }
 
     const insertSql = `INSERT INTO industry_types (eventId, industry_type) VALUES (?, ?)`;
@@ -474,15 +481,15 @@ export function industry_types(eventId, industryTypes) {
 
 export function checkeventId(eventId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM event_details WHERE id = ?"
+    const query = "SELECT * FROM event_details WHERE id = ?";
     db.query(query, [eventId], (err, results) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
-        resolve(results.length > 0 ? true : false)
+        resolve(results.length > 0 ? true : false);
       }
-    })
-  })
+    });
+  });
 }
 
 export async function createAward(
@@ -511,7 +518,7 @@ export async function createAward(
       end_date
     ) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-  `
+  `;
 
   const values = [
     eventId,
@@ -523,33 +530,35 @@ export async function createAward(
     is_end_date,
     is_endorsement,
     start_date,
-    end_date
-  ]
+    end_date,
+  ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Database insert error: ${insertError.message}`))
+          return reject(
+            new Error(`Database insert error: ${insertError.message}`)
+          );
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error(resposne.awardcreatefail))
+          reject(new Error(resposne.awardcreatefail));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
-      message: resposne.awardcreate
-    }
+      message: resposne.awardcreate,
+    };
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
-export function getAwards(eventId, search, sortOrder = 'newest') {
+export function getAwards(eventId, search, sortOrder = "newest") {
   return new Promise((resolve, reject) => {
     let query = `
       SELECT 
@@ -558,8 +567,8 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
         a.category_prefix,
         a.belongs_group,
         a.limit_submission,
-        e.id AS eventId,
-        e.closing_date 
+        a.end_date,
+        e.id AS eventId
       FROM awards_category a 
       LEFT JOIN event_details e ON a.eventId = e.id  
       WHERE a.is_deleted = 0 AND a.eventId = ?`;
@@ -568,9 +577,9 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
       query += ` AND a.category_name LIKE ?`;
     }
 
-    if (sortOrder === 'newest') {
+    if (sortOrder === "newest") {
       query += ` ORDER BY a.created_at DESC`; // Newest first
-    } else if (sortOrder === 'oldest') {
+    } else if (sortOrder === "oldest") {
       query += ` ORDER BY a.created_at ASC`; // Oldest first
     }
 
@@ -602,15 +611,15 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
 
 //   return new Promise((resolve, reject) => {
 //     const sql = `
-//       SELECT 
+//       SELECT
 //         a.id,
 //         a.eventId,
 //         a.category_name,
 //         a.category_prefix,
 //         a.belongs_group,
 //         a.limit_submission,
-//         e.closing_date  
-//       FROM awards_category a 
+//         e.closing_date
+//       FROM awards_category a
 //       LEFT JOIN event_details e ON a.eventId = e.id
 //       WHERE e.id = ?
 //       `;
@@ -654,8 +663,6 @@ export function getAwards(eventId, search, sortOrder = 'newest') {
 //   });
 // }
 
-
-
 export const exportToExcel = async (eventId) => {
   return new Promise((resolve, reject) => {
     try {
@@ -673,7 +680,7 @@ export const exportToExcel = async (eventId) => {
       WHERE e.id = ?
       `;
 
-      db.query(query,[eventId], (err, results) => {
+      db.query(query, [eventId], (err, results) => {
         if (err) {
           console.error("Error executing query:", err.message);
           return reject(err);
@@ -687,8 +694,7 @@ export const exportToExcel = async (eventId) => {
   });
 };
 
-
-export function getEventDashboard(skip, limit, id, sortOrder ) {
+export function getEventDashboard(skip, limit, id, sortOrder) {
   return new Promise((resolve, reject) => {
     let query = `
       SELECT 
@@ -699,11 +705,11 @@ export function getEventDashboard(skip, limit, id, sortOrder ) {
       FROM event_details
       WHERE adminId = ?
     `;
-    
-    if (sortOrder === 'newest') {
-      query += ` ORDER BY created_at DESC`; 
-    } else if (sortOrder === 'oldest') {
-      query += ` ORDER BY created_at ASC`; 
+
+    if (sortOrder === "newest") {
+      query += ` ORDER BY created_at DESC`;
+    } else if (sortOrder === "oldest") {
+      query += ` ORDER BY created_at ASC`;
     }
 
     query += ` LIMIT ? OFFSET ?`;
@@ -712,7 +718,7 @@ export function getEventDashboard(skip, limit, id, sortOrder ) {
 
     db.query(query, queryParams, (err, results) => {
       if (err) {
-        return reject(err); 
+        return reject(err);
       }
 
       resolve(results.length ? results : []);
@@ -720,81 +726,80 @@ export function getEventDashboard(skip, limit, id, sortOrder ) {
   });
 }
 
-
 export async function checkCurrentPass(userId, password) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM admin WHERE id = ?"
+    const query = "SELECT * FROM admin WHERE id = ?";
 
     db.query(query, [userId], async (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
 
       if (results.length === 0) {
-        return resolve({ error: resposne.usernotfound })
+        return resolve({ error: resposne.usernotfound });
       }
 
-      const dbUser = results[0]
-      const passwordMatch = await bcrypt.compare(password, dbUser.password)
+      const dbUser = results[0];
+      const passwordMatch = await bcrypt.compare(password, dbUser.password);
 
       if (!passwordMatch) {
-        return resolve({ error: resposne.invalidpassword })
+        return resolve({ error: resposne.invalidpassword });
       }
 
-      resolve(true)
-    })
-  })
+      resolve(true);
+    });
+  });
 }
 
 export async function newPasswordd({ userId, currentPassword, newPassword }) {
-  const selectSql = "SELECT * FROM admin WHERE id = ?"
-  const updateSql = "UPDATE admin SET password = ? WHERE id = ?"
+  const selectSql = "SELECT * FROM admin WHERE id = ?";
+  const updateSql = "UPDATE admin SET password = ? WHERE id = ?";
 
   try {
     const results = await new Promise((resolve, reject) => {
       db.query(selectSql, [userId], (err, results) => {
-        if (err) return reject(new Error(resposne.errorchangePass))
-        resolve(results)
-      })
-    })
+        if (err) return reject(new Error(resposne.errorchangePass));
+        resolve(results);
+      });
+    });
 
     if (results.length === 0) {
-      throw new Error(resposne.usernotfound)
+      throw new Error(resposne.usernotfound);
     }
 
-    const user = results[0]
+    const user = results[0];
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password)
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      throw new Error(resposne.incorrectcurrentPass)
+      throw new Error(resposne.incorrectcurrentPass);
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds)
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     const updated = await new Promise((resolve, reject) => {
       db.query(updateSql, [hashedPassword, userId], (err, updated) => {
-        if (err) return reject(new Error(resposne.updatePassError))
-        resolve(updated)
-      })
-    })
+        if (err) return reject(new Error(resposne.updatePassError));
+        resolve(updated);
+      });
+    });
 
     if (updated.affectedRows === 0) {
-      throw new Error(resposne.passUpdateFail)
+      throw new Error(resposne.passUpdateFail);
     }
 
-    return resposne.passChanged
+    return resposne.passChanged;
   } catch (error) {
-    throw new Error(resposne.errorchangePass)
+    throw new Error(resposne.errorchangePass);
   }
 }
 
-export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
+export function getMyEvents(skip, limit, id, sortOrder = "oldest") {
   return new Promise((resolve, reject) => {
     const countQuery = `
       SELECT COUNT(*) as totalCount
       FROM event_details
       WHERE is_deleted = 0
-      ${id ? 'AND adminId = ?' : ''}
+      ${id ? "AND adminId = ?" : ""}
     `;
 
     db.query(countQuery, id ? [id] : [], (countErr, countResults) => {
@@ -816,12 +821,12 @@ export function getMyEvents(skip, limit, id, sortOrder = 'oldest') {
           a.is_draft
         FROM event_details a
         WHERE a.is_deleted = 0
-        ${id ? 'AND a.adminId = ?' : ''}
+        ${id ? "AND a.adminId = ?" : ""}
       `;
 
-      if (sortOrder === 'newest') {
+      if (sortOrder === "newest") {
         query += ` ORDER BY a.created_at ASC`;
-      } else if (sortOrder === 'oldest') {
+      } else if (sortOrder === "oldest") {
         query += ` ORDER BY a.created_at  DESC`;
       }
 
@@ -850,18 +855,18 @@ export async function updateAward(awardId, updates) {
   let updateValues = [];
 
   const fields = [
-    'category_name',
-    'category_prefix',
-    'belongs_group',
-    'limit_submission',
-    'is_start_date',
-    'is_end_date',
-    'is_endorsement',
-    'start_date',
-    'end_date'
+    "category_name",
+    "category_prefix",
+    "belongs_group",
+    "limit_submission",
+    "is_start_date",
+    "is_end_date",
+    "is_endorsement",
+    "start_date",
+    "end_date",
   ];
 
-  fields.forEach(field => {
+  fields.forEach((field) => {
     if (updates[field] !== undefined) {
       updateFields.push(`${field} = ?`);
       updateValues.push(updates[field]);
@@ -878,7 +883,7 @@ export async function updateAward(awardId, updates) {
 
   const updateSql = `
     UPDATE awards_category
-    SET ${updateFields.join(', ')}
+    SET ${updateFields.join(", ")}
     WHERE id = ?
   `;
 
@@ -906,7 +911,6 @@ export async function updateAward(awardId, updates) {
         message: "Award updated successfully",
       });
     });
-
   });
 }
 
@@ -957,23 +961,23 @@ export async function EmptyEndDate(awardId) {
 }
 
 export async function softDeleteAward(awardId) {
-  const updateSql = "UPDATE awards_category SET is_deleted = 1 WHERE id = ?"
+  const updateSql = "UPDATE awards_category SET is_deleted = 1 WHERE id = ?";
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [awardId], (err, result) => {
-        if (err) return reject(new Error(resposne.deleteAwardError))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.deleteAwardError));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.awardNotFound)
+      throw new Error(resposne.awardNotFound);
     }
 
-    return resposne.awardDeleted
+    return resposne.awardDeleted;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 
@@ -1047,28 +1051,28 @@ export async function getEventById(eventId) {
             event_banner: results[0].event_banner,
             event_description: results[0].event_description,
             additional_emails: [],
-            industry_types: []
+            industry_types: [],
           };
 
-          results.forEach(row => {
+          results.forEach((row) => {
             if (row.email_id && row.email_address) {
               event.additional_emails.push({
                 email_id: row.email_id,
-                email_address: row.email_address
+                email_address: row.email_address,
               });
             }
 
             if (row.industry_type_id && row.industry_type_name) {
               event.industry_types.push({
                 industry_type_id: row.industry_type_id,
-                industry_type_name: row.industry_type_name
+                industry_type_name: row.industry_type_name,
               });
             }
           });
 
           resolve(event);
         } else {
-          reject(new Error('Event not found'));
+          reject(new Error("Event not found"));
         }
       });
     });
@@ -1079,341 +1083,234 @@ export async function getEventById(eventId) {
   }
 }
 
-export const deleteIndustryTypes = async (eventId) => {
+export const updateEventDetails = async (updates, eventId) => {
   return new Promise((resolve, reject) => {
-    const deleteQuery = "DELETE FROM industry_types WHERE eventId = ?"
-    db.query(deleteQuery, [eventId], (deleteError, result) => {
-      if (deleteError) {
-        return reject(deleteError)
+    db.beginTransaction((err) => {
+      if (err) {
+        return reject(new Error("Failed to begin transaction"));
       }
-      resolve(result)
-    })
-  })
-}
 
-export const updateEventDetails = async (eventId, updates) => {
-  // Building the SET clause dynamically
-  let setClauses = [];
-  let values = [];
+      try {
+        const updateFields = Object.keys(updates)
+          .map((field) => `${field} = ?`)
+          .join(", ");
+        const updateValues = Object.values(updates);
 
-  // Only add fields that are provided
-  if (updates.event_name !== undefined) {
-    setClauses.push("event_name = ?");
-    values.push(updates.event_name);
-  }
-  if (updates.closing_date !== undefined) {
-    setClauses.push("closing_date = ?");
-    values.push(updates.closing_date);
-  }
-  if (updates.closing_time !== undefined) {
-    setClauses.push("closing_time = ?");
-    values.push(updates.closing_time);
-  }
-  if (updates.email !== undefined) {
-    setClauses.push("email = ?");
-    values.push(updates.email);
-  }
-  if (updates.event_url !== undefined) {
-    setClauses.push("event_url = ?");
-    values.push(updates.event_url);
-  }
-  if (updates.time_zone !== undefined) {
-    setClauses.push("time_zone = ?");
-    values.push(updates.time_zone);
-  }
-  if (updates.is_endorsement !== undefined) {
-    setClauses.push("is_endorsement = ?");
-    values.push(updates.is_endorsement);
-  }
-  if (updates.is_withdrawal !== undefined) {
-    setClauses.push("is_withdrawal = ?");
-    values.push(updates.is_withdrawal);
-  }
-  if (updates.is_ediit_entry !== undefined) {
-    setClauses.push("is_ediit_entry = ?");
-    values.push(updates.is_ediit_entry);
-  }
-  if (updates.limit_submission !== undefined) {
-    setClauses.push("limit_submission = ?");
-    values.push(updates.limit_submission);
-  }
-  if (updates.submission_limit !== undefined) {
-    setClauses.push("submission_limit = ?");
-    values.push(updates.submission_limit);
-  }
+        const updateQuery = `
+          UPDATE event_details
+          SET ${updateFields}, updated_at = NOW()
+          WHERE id = ? AND is_deleted = 0;
+        `;
 
-  values.push(eventId);
+        updateValues.push(eventId);
 
-  if (setClauses.length === 0) {
-    return Promise.reject({
-      message: "No valid fields to update",
-    });
-  }
+        db.query(updateQuery, updateValues, (err, result) => {
+          if (err) {
+            return db.rollback(() => {
+              reject(new Error("Database update failed: " + err.message));
+            });
+          }
 
-  const updateSql = `
-    UPDATE event_details
-    SET ${setClauses.join(', ')}
-    WHERE id = ?
-  `;
-
-  return new Promise((resolve, reject) => {
-    db.query(updateSql, values, (updateError, result) => {
-      if (updateError) {
-        console.error("Event Update Error:", updateError);
-        return reject({
-          message: "Failed to update event details",
-          error: updateError,
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                reject(new Error("Transaction commit failed: " + err.message));
+              });
+            }
+            resolve(result);
+          });
         });
+      } catch (error) {
+        db.rollback(() => reject(error));
       }
-
-      if (result.affectedRows === 0) {
-        return reject({
-          message: "No event found with the given ID",
-          eventId: eventId,
-        });
-      }
-
-      resolve(result);
     });
   });
 };
 
-
-export const deleteAdditionalEmails = async (eventId) => {
+export const updateAdditionalEmails = async (eventId, additional_email) => {
   return new Promise((resolve, reject) => {
-    const deleteQuery = "DELETE FROM additional_emails WHERE eventId = ?"
-    db.query(deleteQuery, [eventId], (deleteError, result) => {
-      if (deleteError) {
-        return reject(deleteError)
-      }
-      resolve(result)
-    })
-  })
-}
-
-export const updateAdditionalEmails = async (eventId, additionalEmails) => {
-  const emails = Array.isArray(additionalEmails) ? additionalEmails : [additionalEmails];
-
-  if (emails.length === 0) {
-    return Promise.reject(new Error("No valid additional emails to update"));
-  }
-
-  let setClauses = [];
-  let values = [];
-
-  emails.forEach(email => {
-    setClauses.push("additonal_email = ?");
-    values.push(email);
-  });
-
-  values.push(eventId);
-
-  if (setClauses.length === 0) {
-    return Promise.reject(new Error("No valid additional emails to update"));
-  }
-
-  const updateSql = `
-    UPDATE additional_emails
-    SET ${setClauses.join(', ')}
-    WHERE eventId = ? AND additonal_email IN (?${',?'.repeat(emails.length - 1)})
-  `;
-
-  return new Promise((resolve, reject) => {
-    db.query(updateSql, [...values, ...emails], (updateErr, updateResult) => {
-      if (updateErr) {
-        return reject({
-          message: "Failed to update additional emails",
-          error: updateErr,
-        });
-      }
-
-      if (updateResult.affectedRows === 0) {
-        return reject({
-          message: "No matching emails found to update",
-          eventId: eventId,
-        });
-      }
-
-      resolve({
-        status: 'updated',
-        updatedEmails: emails,
-      });
-    });
-  });
-};
-export const updateIndustryTypes = async (eventId, industryTypes) => {
-  const types = Array.isArray(industryTypes) ? industryTypes : [industryTypes];
-
-  // Early exit if no valid types are provided
-  if (types.length === 0) {
-    return Promise.reject(new Error("No valid industry types to update"));
-  }
-
-  let setClauses = [];
-  let values = [];
-
-  // Build the SET clauses and values for industry types
-  types.forEach(industryType => {
-    setClauses.push("industry_type = ?");
-    values.push(industryType);
-  });
-
-  values.push(eventId);
-
-  // If no valid industry types were provided, reject with error
-  if (setClauses.length === 0) {
-    return Promise.reject(new Error("No valid industry types to update"));
-  }
-
-  const updateSql = `
-    UPDATE industry_types
-    SET ${setClauses.join(', ')}
-    WHERE eventId = ? AND industry_type IN (?${',?'.repeat(types.length - 1)})
-  `;
-
-  return new Promise((resolve, reject) => {
-    db.query(updateSql, [...values, ...types], (updateErr, updateResult) => {
-      if (updateErr) {
-        console.error("Industry Type Update Error:", updateErr);
-        return reject({
-          message: "Failed to update industry types",
-          error: updateErr
-        });
-      }
-
-      if (updateResult.affectedRows === 0) {
-        console.warn(`No matching industry types found to update for eventId ${eventId}`);
-        return reject({
-          message: "No matching industry types found to update",
-          eventId: eventId
-        });
-      }
-
-      resolve({
-        status: 'updated',
-        updatedIndustryTypes: types
-      });
-    });
-  });
-};
-
-
-export const updateEventSocial = (updates, eventId) => {
-  return new Promise((resolve, reject) => {
-    const updateFields = []
-    const updateValues = []
-
-    if (!Number.isInteger(eventId) || eventId <= 0) {
-      return reject(new Error('Invalid event ID.'))
+    if (!Array.isArray(additional_email) || additional_email.length === 0) {
+      return reject(new Error("Additional Email must be a non-empty array."));
     }
 
-    const checkEventQuery = 'SELECT * FROM event_details WHERE id = ?'
+    const placeholders = additional_email.map(() => `(?, ?)`).join(", ");
+    const values = additional_email.flatMap((email) => [eventId, email]);
+
+    const deleteSql = `DELETE FROM additional_emails WHERE eventId = ?`;
+
+    const insertSql = `
+      INSERT INTO additional_emails (eventId, additonal_email)
+      VALUES ${placeholders}
+    `;
+
+    db.query(deleteSql, [eventId], (deleteError) => {
+      if (deleteError) {
+        return reject(deleteError);
+      }
+
+      db.query(insertSql, values, (insertError, result) => {
+        if (insertError) {
+          reject(insertError);
+        } else {
+          resolve(result.affectedRows); 
+        }
+      });
+    });
+  });
+};
+
+export const updatedIndustryTypes = async (eventId, industry_type) => {
+  return new Promise((resolve, reject) => {
+    if (!Array.isArray(industry_type) || industry_type.length === 0) {
+      return reject(new Error("Industry Type must be a non-empty array."));
+    }
+
+    const placeholders = industry_type.map(() => `(?, ?)`).join(", ");
+    const values = industry_type.flatMap((industry) => [eventId, industry]);
+
+    // console.log('Placeholders:', placeholders); // Debugging log
+    // console.log('Values:', values); // Debugging log
+
+    const deleteSql = `DELETE FROM industry_types WHERE eventId = ?`;
+
+    const insertSql = `
+      INSERT INTO industry_types (eventId, industry_type)
+      VALUES ${placeholders}
+    `;
+
+    db.query(deleteSql, [eventId], (deleteError) => {
+      if (deleteError) {
+        // console.error('Delete Error:', deleteError); // Debugging log
+        return reject(deleteError);
+      }
+
+      db.query(insertSql, values, (insertError, result) => {
+        if (insertError) {
+          // console.error('Insert Error:', insertError); // Debugging log
+          reject(insertError);
+        } else {
+          // console.log('Industry Types Inserted:', result.affectedRows); // Debugging log
+          resolve(result.affectedRows); 
+        }
+      });
+    });
+  });
+};
+export const updateEventSocial = (updates, eventId) => {
+  return new Promise((resolve, reject) => {
+    const updateFields = [];
+    const updateValues = [];
+
+    if (!Number.isInteger(eventId) || eventId <= 0) {
+      return reject(new Error("Invalid event ID."));
+    }
+
+    const checkEventQuery = "SELECT * FROM event_details WHERE id = ?";
     db.query(checkEventQuery, [eventId], (err, result) => {
-      if (err) return reject(err)
+      if (err) return reject(err);
       if (result.length === 0) {
-        return reject(new Error('Event not found.'))
+        return reject(new Error("Event not found."));
       }
 
       if (updates.imageFilename) {
-        updateFields.push('event_logo = ?')
-        updateValues.push(updates.imageFilename)
+        updateFields.push("event_logo = ?");
+        updateValues.push(updates.imageFilename);
       }
 
       if (updates.event_banner) {
-        updateFields.push('event_banner = ?')
-        updateValues.push(updates.event_banner)
+        updateFields.push("event_banner = ?");
+        updateValues.push(updates.event_banner);
       }
 
       if (updates.event_description) {
-        updateFields.push('event_description = ?')
-        updateValues.push(updates.event_description)
+        updateFields.push("event_description = ?");
+        updateValues.push(updates.event_description);
       }
 
       if (updates.closing_messsage) {
-        updateFields.push('closing_messsage = ?')
-        updateValues.push(updates.closing_messsage)
+        updateFields.push("closing_messsage = ?");
+        updateValues.push(updates.closing_messsage);
       }
 
       if (updates.jury_welcm_messsage) {
-        updateFields.push('jury_welcm_messsage = ?')
-        updateValues.push(updates.jury_welcm_messsage)
+        updateFields.push("jury_welcm_messsage = ?");
+        updateValues.push(updates.jury_welcm_messsage);
       }
 
       if (updates.is_social !== undefined) {
-        updateFields.push('is_social = ?')
-        updateValues.push(updates.is_social)
+        updateFields.push("is_social = ?");
+        updateValues.push(updates.is_social);
       }
 
       if (updates.social !== undefined) {
         if (Array.isArray(updates.social)) {
-          updateFields.push('social = ?')
-          updateValues.push(updates.social.join(','))
+          updateFields.push("social = ?");
+          updateValues.push(updates.social.join(","));
         } else {
-          updateFields.push('social = ?')
-          updateValues.push(updates.social)
+          updateFields.push("social = ?");
+          updateValues.push(updates.social);
         }
       }
 
       if (updates.social_image) {
-        updateFields.push('social_image = ?')
-        updateValues.push(updates.social_image)
+        updateFields.push("social_image = ?");
+        updateValues.push(updates.social_image);
       }
 
       if (updateFields.length === 0) {
-        return reject(new Error('No update field provided.'))
+        return reject(new Error("No update field provided."));
       }
- 
+
       const updateSql = `
         UPDATE event_details
-        SET ${updateFields.join(', ')}
+        SET ${updateFields.join(", ")}
         WHERE id = ?
-      `
+      `;
 
       db.query(updateSql, [...updateValues, eventId], (error, result) => {
         if (error) {
-          console.log("db error:", error)
-          return reject(new Error('Database update failed.'))
+          console.log("db error:", error);
+          return reject(new Error("Database update failed."));
         }
 
         if (result.affectedRows > 0) {
-          resolve(true)
+          resolve(true);
         } else {
-          reject(new Error('No affected row found with this ID.'))
+          reject(new Error("No affected row found with this ID."));
         }
-      })
-    })
-  })
-}
-
+      });
+    });
+  });
+};
 
 export async function addSubmissionId(eventId, submission_id) {
-
-  const updateSql = `UPDATE event_details SET submission_id = ? WHERE id = ?`
-  const values = [submission_id, eventId]
+  const updateSql = `UPDATE event_details SET submission_id = ? WHERE id = ?`;
+  const values = [submission_id, eventId];
   try {
     const result = await new Promise((resolve, reject) => {
-
       db.query(updateSql, values, (updateError, result) => {
         if (updateError) {
-          return reject(new Error(`Database Update Error: ${updateError.message}`))
+          return reject(
+            new Error(`Database Update Error: ${updateError.message}`)
+          );
         }
 
         if (result.affectedRows > 0) {
-          resolve(result.affectedRows)
+          resolve(result.affectedRows);
         } else {
-          reject(new Error(resposne.noaffectedRowwithId))
+          reject(new Error(resposne.noaffectedRowwithId));
         }
-      })
-    })
+      });
+    });
     return {
       affectedRows: result,
-      message: resposne.SubmissionFormatUpdate
-    }
+      message: resposne.SubmissionFormatUpdate,
+    };
   } catch (error) {
-    throw new Error(`Database Error: ${error.message}`)
+    throw new Error(`Database Error: ${error.message}`);
   }
 }
-// Check if the event is already visible
+
 export function checkifAlreadyVisible(awardId) {
   return new Promise((resolve, reject) => {
     const query = "SELECT is_publicly_visble FROM event_details WHERE id = ?";
@@ -1439,7 +1336,9 @@ export async function publiclyVisible(eventId, is_publicly_visble) {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, values, (updateError, result) => {
         if (updateError) {
-          return reject(new Error(`Database Update Error: ${updateError.message}`));
+          return reject(
+            new Error(`Database Update Error: ${updateError.message}`)
+          );
         }
 
         if (result.affectedRows > 0) {
@@ -1468,9 +1367,12 @@ export async function publiclyVisible(eventId, is_publicly_visble) {
   }
 }
 
-
 export async function generalSettings(
   eventId,
+  start_date,
+  start_time,
+  end_date,
+  end_time,
   is_active,
   is_one_at_a_time,
   is_individual_category_assigned,
@@ -1481,10 +1383,15 @@ export async function generalSettings(
   is_data_single_page,
   is_total,
   is_jury_others_score,
-  is_abstain
+  is_abstain,
+  overall_score
 ) {
   const insertSql = `INSERT INTO general_settings (
     eventId,
+    start_date,
+    start_time,
+    end_date,
+    end_time,
     is_active,
     is_one_at_a_time,
     is_individual_category_assigned,
@@ -1495,10 +1402,16 @@ export async function generalSettings(
     is_data_single_page,
     is_total,
     is_jury_others_score,
-    is_abstain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    is_abstain,
+    overall_score
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const values = [
     eventId,
+    start_date,
+    start_time,
+    end_date,
+    end_time,
     is_active,
     is_one_at_a_time,
     is_individual_category_assigned,
@@ -1509,173 +1422,95 @@ export async function generalSettings(
     is_data_single_page,
     is_total,
     is_jury_others_score,
-    is_abstain
-  ]
+    is_abstain,
+    overall_score ,
+  ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Database Update Error: ${insertError.message}`))
+          return reject(new Error(`Database Insert Error: ${insertError.message}`));
         }
 
         if (result.affectedRows > 0) {
-          resolve({ affectedRows: result.affectedRows, id: result.insertId })
+          resolve({ affectedRows: result.affectedRows, id: result.insertId });
         } else {
-          reject(new Error(resposne.noaffectedRows))
+          reject(new Error('No rows affected during insert.'));
         }
-      })
-    })
+      });
+    });
 
     return {
       affectedRows: result.affectedRows,
       id: result.id,
-      message: resposne.generalSettingsSuccess
-    }
+      message: 'General settings created successfully.',
+    };
   } catch (error) {
-    throw new Error(`Database Error: ${error.message}`)
+    throw new Error(`Database Error: ${error.message}`);
   }
 }
 
-export function overall_score(setingId, overall_score) {
-  return new Promise((resolve, reject) => {
-    const query = `
-      INSERT INTO overall_score (setingId, overall_score) 
-      VALUES (?, ?)
-    `
 
-    db.query(query, [setingId, overall_score], (err, result) => {
-      if (err) {
-        reject(new Error(`Failed to insert Overall Score: ${err.message}`))
-      } else {
-        resolve({
-          affectedRows: result.affectedRows,
-          message: resposne.overallScoreINsertSuccess
-        })
-      }
-    })
-  })
-}
+export async function statusEvent(eventId, updates) {
+  // Destructure the updates object to get individual fields
+  const { is_live, is_draft, is_archive } = updates;
 
-export async function StartEndUpdate(
-  event_id,
-  start_date,
-  end_date
-) {
+  const updateSql = `
+    UPDATE event_details 
+    SET is_live = ?, is_draft = ?, is_archive = ? 
+    WHERE id = ?`;
 
-  const updateSql = `UPDATE event_details SET 
-    start_date = ?,
-  end_date = ?
-  WHERE id = ?`
-  const values = [
-    event_id,
-    start_date,
-    end_date
-  ]
+  const values = [is_live, is_draft, is_archive, eventId];  
+
   try {
     const result = await new Promise((resolve, reject) => {
-
       db.query(updateSql, values, (updateError, result) => {
         if (updateError) {
-          return reject(new Error(`Database Update Error: ${updateError.message}`))
+          return reject(new Error(`Database Update Error: ${updateError.message}`));
         }
 
         if (result.affectedRows > 0) {
-          resolve(result.affectedRows)
+          resolve(result.affectedRows);
         } else {
-          reject(new Error(resposne.noaffectedRowwithId))
+          reject(new Error('No rows affected.'));
         }
-      })
-    })
+      });
+    });
+
     return {
       affectedRows: result,
-      message: resposne.startEndUpdateSuccess
-    }
+      message: "Event status updated successfully.",
+    };
   } catch (error) {
-    throw new Error(`Database Error: ${error.message}`)
-  }
-}
-
-export async function liveEvent(eventId, is_live) {
-
-  const updateSql = `UPDATE event_details SET is_live = ? WHERE id = ?`
-  const values = [is_live, eventId]
-  try {
-    const result = await new Promise((resolve, reject) => {
-
-      db.query(updateSql, values, (updateError, result) => {
-        if (updateError) {
-          return reject(new Error(`Database Update Error: ${updateError.message}`))
-        }
-
-        if (result.affectedRows > 0) {
-          resolve(result.affectedRows)
-        } else {
-          reject(new Error(resposne.noaffectedRowwithId))
-        }
-      })
-    })
-    return {
-      affectedRows: result,
-      message: resposne.EventLiveSuccess
-    }
-  } catch (error) {
-    throw new Error(`Database Error: ${error.message}`)
-  }
-}
-
-export async function archiveEvent(eventId, is_archive) {
-
-  const updateSql = `UPDATE event_details SET is_archive = ? WHERE id = ?`
-  const values = [is_archive, eventId]
-  try {
-    const result = await new Promise((resolve, reject) => {
-
-      db.query(updateSql, values, (updateError, result) => {
-        if (updateError) {
-          return reject(new Error(`Database Update Error: ${updateError.message}`))
-        }
-
-        if (result.affectedRows > 0) {
-          resolve(result.affectedRows)
-        } else {
-          reject(new Error(resposne.noaffectedRowwithId))
-        }
-      })
-    })
-    return {
-      affectedRows: result,
-      message: resposne.EventArchiveSuccess
-    }
-  } catch (error) {
-    throw new Error(`Database Error: ${error.message}`)
+    throw new Error(`Database Error: ${error.message}`);
   }
 }
 
 export async function CreateScorecardCriteria(eventId, title, description) {
-  const insertSql = `INSERT INTO criteria (eventId, title, description) VALUES (?, ?, ?)`
-  const values = [eventId, title, description]
+  const insertSql = `INSERT INTO criteria (eventId, title, description) VALUES (?, ?, ?)`;
+  const values = [eventId, title, description];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(insertError)
+          return reject(insertError);
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error(resposne.scorecardCriteriaCreateFail))
+          reject(new Error(resposne.scorecardCriteriaCreateFail));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
       message: resposne.scorecardCriteriaCreateSuccess,
-    }
+    };
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
@@ -1684,18 +1519,18 @@ export function overallScorecardValue(criteriaId, eventId, overall_scorecard) {
     const query = `
       INSERT INTO overall_scorecard (criteriaId, eventId, scorecard_value) 
       VALUES (?, ?, ?)
-    `
+    `;
     db.query(query, [criteriaId, eventId, overall_scorecard], (err, result) => {
       if (err) {
-        reject(new Error(resposne.overallvaluesFail))
+        reject(new Error(resposne.overallvaluesFail));
       } else {
         resolve({
           id: result.insertId,
           message: resposne.overallScorecardValueSuccess,
-        })
+        });
       }
-    })
-  })
+    });
+  });
 }
 
 export function criteriaSettings(criteriaId, eventId, criteria_type) {
@@ -1703,198 +1538,223 @@ export function criteriaSettings(criteriaId, eventId, criteria_type) {
     const query = `
       INSERT INTO criteria_settings (criteriaId, eventId, criteria_type) 
       VALUES (?, ?, ?)
-    `
+    `;
     db.query(query, [criteriaId, eventId, criteria_type], (err, result) => {
       if (err) {
-        return reject(new Error(resposne.criteriaSettingCreateFail))
+        return reject(new Error(resposne.criteriaSettingCreateFail));
       }
       resolve({
         id: result.insertId,
         message: resposne.criteriaSettingCreateSuccess,
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
-export async function CreateCriteriaSettingValues(criteriaId, eventId, settingId, caption, value) {
-
+export async function CreateCriteriaSettingValues(
+  criteriaId,
+  eventId,
+  settingId,
+  caption,
+  value
+) {
   const insertSql = `INSERT INTO criteria_settings_values 
     (criteriaId, eventId, settingId, caption, value) 
-    VALUES (?, ?, ?, ?, ?)`
+    VALUES (?, ?, ?, ?, ?)`;
 
-  const values = [criteriaId, eventId, settingId, caption, value]
+  const values = [criteriaId, eventId, settingId, caption, value];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(resposne.settingValueCreateFail))
+          return reject(new Error(resposne.settingValueCreateFail));
         }
         resolve({
           id: result.insertId,
           message: resposne.settingValueCreateSucces,
-        })
-      })
-    })
+        });
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
 export function checkIfDeletedCriteriaId(criteriaId) {
   return new Promise((resolve, reject) => {
-    const query = `SELECT is_deleted = 1 FROM criteria WHERE id = ?`
+    const query = `SELECT is_deleted = 1 FROM criteria WHERE id = ?`;
 
     db.query(query, [criteriaId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck))
+        return reject(new Error(resposne.deletionerrorCheck));
       }
       if (results.length === 0) {
-        return reject(new Error(resposne.criteriaIdnotFound))
+        return reject(new Error(resposne.criteriaIdnotFound));
       }
-      resolve(results[0].is_deleted === 1)
-    })
-  })
+      resolve(results[0].is_deleted === 1);
+    });
+  });
 }
 
 export async function softDeleteCriteriaSettingValue(criteriaId) {
-  const updateSql = `UPDATE criteria_settings_values SET is_deleted = 1 WHERE criteriaId = ?`
+  const updateSql = `UPDATE criteria_settings_values SET is_deleted = 1 WHERE criteriaId = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [criteriaId], (err, result) => {
-        if (err) return reject(new Error(resposne.settingValueUpdateFail))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.settingValueUpdateFail));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.nocriteriaIdFound)
+      throw new Error(resposne.nocriteriaIdFound);
     }
 
-    return { message: resposne.settingvalueDeletedSuccess, affectedRows: result.affectedRows }
+    return {
+      message: resposne.settingvalueDeletedSuccess,
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
 export async function softDeleteCriteriaSetting(criteriaId) {
-  const updateSql = `UPDATE criteria_settings SET is_deleted = 1 WHERE criteriaId = ?`
+  const updateSql = `UPDATE criteria_settings SET is_deleted = 1 WHERE criteriaId = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [criteriaId], (err, result) => {
-        if (err) return reject(new Error("resposne.settingValueUpdateFail"))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error("resposne.settingValueUpdateFail"));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.nocriteriaIdFound)
+      throw new Error(resposne.nocriteriaIdFound);
     }
 
-    return { message: "resposne.settingvalueDeletedSuccess", affectedRows: result.affectedRows }
+    return {
+      message: "resposne.settingvalueDeletedSuccess",
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
 export async function softDeleteCriteria(criteriaId) {
-  const updateSql = `UPDATE criteria SET is_deleted = 1 WHERE id = ?`
+  const updateSql = `UPDATE criteria SET is_deleted = 1 WHERE id = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [criteriaId], (err, result) => {
-        if (err) return reject(new Error("resposne.settingValueUpdateFail"))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error("resposne.settingValueUpdateFail"));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.nocriteriaIdFound)
+      throw new Error(resposne.nocriteriaIdFound);
     }
 
-    return { message: "resposne.settingvalueDeletedSuccess", affectedRows: result.affectedRows }
+    return {
+      message: "resposne.settingvalueDeletedSuccess",
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
-
 export async function CreateJuryGroup(eventId, group_name, filtering_pattern) {
-  const insertSql = `INSERT INTO jury_group (eventId, group_name, filtering_pattern) VALUES (?, ?, ?)`
-  const values = [eventId, group_name, filtering_pattern]
+  const insertSql = `INSERT INTO jury_group (eventId, group_name, filtering_pattern) VALUES (?, ?, ?)`;
+  const values = [eventId, group_name, filtering_pattern];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Database error: ${insertError.message}`))
+          return reject(new Error(`Database error: ${insertError.message}`));
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error(resposne.juryGroupNameCreateFail))
+          reject(new Error(resposne.juryGroupNameCreateFail));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
       message: resposne.jurygroupNameCreateSuccess,
-    }
+    };
   } catch (error) {
-    throw new Error(`Error creating jury group: ${error.message}`)
+    throw new Error(`Error creating jury group: ${error.message}`);
   }
 }
 
-export async function CreateFilteringCriteria(eventId, groupId, category, IsValue) {
-  const query = `INSERT INTO filtering_criteria (eventId, groupId, category, IsValue) VALUES (?, ?, ?, ?)`
+export async function CreateFilteringCriteria(
+  eventId,
+  groupId,
+  category,
+  IsValue
+) {
+  const query = `INSERT INTO filtering_criteria (eventId, groupId, category, IsValue) VALUES (?, ?, ?, ?)`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(query, [eventId, groupId, category, IsValue], (err, result) => {
         if (err) {
-          return reject(new Error(`Database error: ${err.message}`))
+          return reject(new Error(`Database error: ${err.message}`));
         }
         resolve({
           id: result.insertId,
           message: resposne.FilteringCriteriaInsertSuccess,
-        })
-      })
-    })
+        });
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Error creating filtering criteria: ${error.message}`)
+    throw new Error(`Error creating filtering criteria: ${error.message}`);
   }
 }
 
-export async function CreateFilteringCriteriaCategory(eventId, groupId, filterId, category) {
-  const insertSql = `INSERT INTO filtering_criteria_category (eventId, groupId, filterId, category) VALUES (?, ?, ?, ?)`
-  const values = [eventId, groupId, filterId, category]
+export async function CreateFilteringCriteriaCategory(
+  eventId,
+  groupId,
+  filterId,
+  category
+) {
+  const insertSql = `INSERT INTO filtering_criteria_category (eventId, groupId, filterId, category) VALUES (?, ?, ?, ?)`;
+  const values = [eventId, groupId, filterId, category];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Database error: ${insertError.message}`))
+          return reject(new Error(`Database error: ${insertError.message}`));
         }
         resolve({
           id: result.insertId,
           message: resposne.filteringCriteriaCategoryCreateSuccess,
-        })
-      })
-    })
+        });
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Error creating filtering criteria category: ${error.message}`)
+    throw new Error(
+      `Error creating filtering criteria category: ${error.message}`
+    );
   }
 }
 
@@ -1924,7 +1784,7 @@ export async function AssignJury(
       is_assign_send
     ) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `
+  `;
 
   const values = [
     eventId,
@@ -1936,29 +1796,31 @@ export async function AssignJury(
     is_auto_signin,
     is_assign_New,
     is_assign_close,
-    is_assign_send
-  ]
+    is_assign_send,
+  ];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Database insert error: ${insertError.message}`))
+          return reject(
+            new Error(`Database insert error: ${insertError.message}`)
+          );
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error(resposne.assignJuryCreateFail))
+          reject(new Error(resposne.assignJuryCreateFail));
         }
-      })
-    })
+      });
+    });
 
     return {
       id: result,
-      message: resposne.assignJuryCreateSuccess
-    }
+      message: resposne.assignJuryCreateSuccess,
+    };
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
@@ -1984,17 +1846,17 @@ export function getScorecard() {
       LEFT JOIN criteria_settings_values cv ON cv.settingId = cs.id
       WHERE e.is_deleted = 0 AND c.id IS NOT NULL
       ORDER BY e.id, c.id
-    `
+    `;
 
     db.query(query, (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
 
-      const scorecardMap = {}
+      const scorecardMap = {};
 
-      results.forEach(result => {
-        const criteriaId = result.criteria_id
+      results.forEach((result) => {
+        const criteriaId = result.criteria_id;
 
         if (!scorecardMap[criteriaId]) {
           scorecardMap[criteriaId] = {
@@ -2003,94 +1865,107 @@ export function getScorecard() {
             title: result.title,
             description: result.description,
             scorecard_values: [],
-            criteria_settings: []
-          }
+            criteria_settings: [],
+          };
         }
 
-        if (result.overall_scorecard_id &&
-          !scorecardMap[criteriaId].scorecard_values.includes(result.scorecard_value)) {
-          scorecardMap[criteriaId].scorecard_values.push(result.scorecard_value)
+        if (
+          result.overall_scorecard_id &&
+          !scorecardMap[criteriaId].scorecard_values.includes(
+            result.scorecard_value
+          )
+        ) {
+          scorecardMap[criteriaId].scorecard_values.push(
+            result.scorecard_value
+          );
         }
 
         if (result.criteria_setting_id) {
           const setting = {
             criteria_type: result.criteria_type,
             caption: result.caption,
-            value: result.criteria_value
-          }
+            value: result.criteria_value,
+          };
 
-          const exists = scorecardMap[criteriaId].criteria_settings.some(s =>
-            s.criteria_type === setting.criteria_type &&
-            s.caption === setting.caption &&
-            s.value === setting.value
-          )
+          const exists = scorecardMap[criteriaId].criteria_settings.some(
+            (s) =>
+              s.criteria_type === setting.criteria_type &&
+              s.caption === setting.caption &&
+              s.value === setting.value
+          );
 
           if (!exists) {
-            scorecardMap[criteriaId].criteria_settings.push(setting)
+            scorecardMap[criteriaId].criteria_settings.push(setting);
           }
         }
-      })
+      });
 
-      const Results = Object.values(scorecardMap)
+      const Results = Object.values(scorecardMap);
 
-      resolve(Results)
-    })
-  })
+      resolve(Results);
+    });
+  });
 }
 
 export async function updateScorecardCriteria(criteriaId, title, description) {
-  const updateSql = `UPDATE criteria SET title = ?, description = ? WHERE id = ?`
-  const values = [title, description, criteriaId]
+  const updateSql = `UPDATE criteria SET title = ?, description = ? WHERE id = ?`;
+  const values = [title, description, criteriaId];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, values, (updateError, result) => {
         if (updateError) {
-          return reject(updateError)
+          return reject(updateError);
         }
         if (result.affectedRows > 0) {
           resolve({
             id: criteriaId,
             message: resposne.scorecardCriteriaUpdateSuccess,
-          })
+          });
         } else {
-          reject(new Error(resposne.scorecardCriteriaUpdateFail))
+          reject(new Error(resposne.scorecardCriteriaUpdateFail));
         }
-      })
-    })
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 
-export function updateOverallScorecardValue(criteriaId, eventId, overall_scorecard) {
+export function updateOverallScorecardValue(
+  criteriaId,
+  eventId,
+  overall_scorecard
+) {
   return new Promise((resolve, reject) => {
     const updateQuery = `
       UPDATE overall_scorecard 
       SET scorecard_value = ? 
       WHERE criteriaId = ? AND eventId = ?
-    `
+    `;
 
-    db.query(updateQuery, [overall_scorecard, criteriaId, eventId], (err, result) => {
-      if (err) {
-        return reject(new Error(resposne.overallvaluesUpdateFail))
+    db.query(
+      updateQuery,
+      [overall_scorecard, criteriaId, eventId],
+      (err, result) => {
+        if (err) {
+          return reject(new Error(resposne.overallvaluesUpdateFail));
+        }
+
+        if (result.affectedRows > 0) {
+          resolve({
+            id: criteriaId,
+            message: resposne.overallScorecardValueUpdateSuccess,
+          });
+        } else {
+          reject(new Error(resposne.overallvaluesUpdateFail));
+        }
       }
-
-
-      if (result.affectedRows > 0) {
-        resolve({
-          id: criteriaId,
-          message: resposne.overallScorecardValueUpdateSuccess,
-        })
-      } else {
-        reject(new Error(resposne.overallvaluesUpdateFail))
-      }
-    })
-  })
+    );
+  });
 }
-
 
 export function updateCriteriaSettings(criteriaId, eventId, criteria_type) {
   return new Promise((resolve, reject) => {
@@ -2098,203 +1973,236 @@ export function updateCriteriaSettings(criteriaId, eventId, criteria_type) {
       UPDATE criteria_settings 
       SET criteria_type = ? 
       WHERE criteriaId = ? AND eventId = ?
-    `
+    `;
     db.query(query, [criteria_type, criteriaId, eventId], (err, result) => {
       if (err) {
-        return reject(new Error(resposne.criteriaSettingCreateFail))
+        return reject(new Error(resposne.criteriaSettingCreateFail));
       }
       if (result.affectedRows === 0) {
-        return reject(new Error(resposne.noSettingFound))
+        return reject(new Error(resposne.noSettingFound));
       }
       resolve({
         message: resposne.settingUpdateSuccess,
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
-export function updateCriteriaSettingValues(criteriaId, eventId, settingId, caption, value) {
+export function updateCriteriaSettingValues(
+  criteriaId,
+  eventId,
+  settingId,
+  caption,
+  value
+) {
   return new Promise((resolve, reject) => {
     const updateSql = `
       UPDATE criteria_settings_values 
       SET caption = ?, value = ? 
       WHERE criteriaId = ? AND eventId = ? AND settingId = ?
-    `
-    const values = [caption, value, criteriaId, eventId, settingId]
+    `;
+    const values = [caption, value, criteriaId, eventId, settingId];
 
     db.query(updateSql, values, (err, result) => {
       if (err) {
-        return reject(new Error(resposne.settingvalueUpdateFail))
+        return reject(new Error(resposne.settingvalueUpdateFail));
       }
       if (result.affectedRows === 0) {
-        return reject(new Error(resposne.nosettingvalueFound))
+        return reject(new Error(resposne.nosettingvalueFound));
       }
       resolve({
         message: resposne.criteriaSettingValueUpateSuccess,
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
-export async function UpdateJuryGroup(groupId, eventId, group_name, filtering_pattern) {
-  const updateSql = `UPDATE jury_group SET eventId = ?, group_name = ?, filtering_pattern = ? WHERE id = ?`
-  const values = [eventId, group_name, filtering_pattern, groupId]
+export async function UpdateJuryGroup(
+  groupId,
+  eventId,
+  group_name,
+  filtering_pattern
+) {
+  const updateSql = `UPDATE jury_group SET eventId = ?, group_name = ?, filtering_pattern = ? WHERE id = ?`;
+  const values = [eventId, group_name, filtering_pattern, groupId];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, values, (updateError, result) => {
         if (updateError) {
-          return reject(new Error(`Database error: ${updateError.message}`))
+          return reject(new Error(`Database error: ${updateError.message}`));
         }
         if (result.affectedRows > 0) {
           resolve({
             id: groupId,
             message: resposne.juryGroupUpdateSuccess,
-          })
+          });
         } else {
-          reject(new Error(resposne.juryGroupUpdateFail))
+          reject(new Error(resposne.juryGroupUpdateFail));
         }
-      })
-    })
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Error updating jury group: ${error.message}`)
+    throw new Error(`Error updating jury group: ${error.message}`);
   }
 }
 
-export async function UpdateFilteringCriteria(criteriaId, eventId, groupId, category, IsValue) {
-  const updateQuery = `UPDATE filtering_criteria SET eventId = ?, groupId = ?, category = ?, IsValue = ? WHERE id = ?`
-  const values = [eventId, groupId, category, IsValue, criteriaId]
+export async function UpdateFilteringCriteria(
+  criteriaId,
+  eventId,
+  groupId,
+  category,
+  IsValue
+) {
+  const updateQuery = `UPDATE filtering_criteria SET eventId = ?, groupId = ?, category = ?, IsValue = ? WHERE id = ?`;
+  const values = [eventId, groupId, category, IsValue, criteriaId];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateQuery, values, (err, result) => {
         if (err) {
-          return reject(new Error(`Database error: ${err.message}`))
+          return reject(new Error(`Database error: ${err.message}`));
         }
         if (result.affectedRows > 0) {
           resolve({
             id: criteriaId,
             message: resposne.FilteringCriteriaUpdateSuccess,
-          })
+          });
         } else {
-          reject(new Error(resposne.FilteringCriteriaUpdateFail))
+          reject(new Error(resposne.FilteringCriteriaUpdateFail));
         }
-      })
-    })
+      });
+    });
 
-    return result
+    return result;
   } catch (error) {
-    throw new Error(`Error updating filtering criteria: ${error.message}`)
+    throw new Error(`Error updating filtering criteria: ${error.message}`);
   }
 }
 
-export async function UpdateFilteringCriteriaCategory(eventId, groupId, filterId, category) {
-  const updateSql = `UPDATE filtering_criteria_category SET category = ? WHERE eventId = ? AND groupId = ? AND filterId = ?`
-  const values = [category, eventId, groupId, filterId]
+export async function UpdateFilteringCriteriaCategory(
+  eventId,
+  groupId,
+  filterId,
+  category
+) {
+  const updateSql = `UPDATE filtering_criteria_category SET category = ? WHERE eventId = ? AND groupId = ? AND filterId = ?`;
+  const values = [category, eventId, groupId, filterId];
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, values, (err, result) => {
         if (err) {
-          return reject(new Error(`Database error: ${err.message}`))
+          return reject(new Error(`Database error: ${err.message}`));
         }
         if (result.affectedRows === 0) {
-          return reject(new Error(`No category found to update for filter ID ${filterId}.`))
+          return reject(
+            new Error(`No category found to update for filter ID ${filterId}.`)
+          );
         }
         resolve({
           id: filterId,
           message: resposne.filteringCriteriaCategoryUpdateSuccess,
-        })
-      })
-    })
-    return result
+        });
+      });
+    });
+    return result;
   } catch (error) {
-    throw new Error(`Error updating filtering criteria category: ${error.message}`)
+    throw new Error(
+      `Error updating filtering criteria category: ${error.message}`
+    );
   }
 }
 
-
-
 export function checkifDeletedGroupId(groupId) {
   return new Promise((resolve, reject) => {
-    const query = `SELECT is_deleted = 1 FROM jury_group WHERE id = ?`
+    const query = `SELECT is_deleted = 1 FROM jury_group WHERE id = ?`;
     db.query(query, [groupId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck))
+        return reject(new Error(resposne.deletionerrorCheck));
       }
       if (results.length === 0) {
-        return reject(new Error(resposne.groupnotFound))
+        return reject(new Error(resposne.groupnotFound));
       }
-      resolve(results[0].is_deleted === 1)
-    })
-  })
+      resolve(results[0].is_deleted === 1);
+    });
+  });
 }
 
 export async function softDeleteJuryGroup(groupId) {
-  const updateSql = `UPDATE jury_group SET is_deleted = 1 WHERE id = ?`
+  const updateSql = `UPDATE jury_group SET is_deleted = 1 WHERE id = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [groupId], (err, result) => {
-        if (err) return reject(new Error(resposne.groupUpdateFail))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.groupUpdateFail));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.noGroupFound)
+      throw new Error(resposne.noGroupFound);
     }
 
-    return { message: resposne.groupDeletedSuccess, affectedRows: result.affectedRows }
+    return {
+      message: resposne.groupDeletedSuccess,
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
 export async function softDeleteFilteringCriteria(groupId) {
-  const updateSql = ` UPDATE filtering_criteria SET is_deleted = 1 WHERE groupId = ?`
+  const updateSql = ` UPDATE filtering_criteria SET is_deleted = 1 WHERE groupId = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [groupId], (err, result) => {
-        if (err) return reject(new Error(resposne.filteringCriteriaUpdateFail))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.filteringCriteriaUpdateFail));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.noIdFoundFilterCriteria)
+      throw new Error(resposne.noIdFoundFilterCriteria);
     }
 
-    return { message: resposne.filteringCriteriaDeletedSuccess, affectedRows: result.affectedRows }
+    return {
+      message: resposne.filteringCriteriaDeletedSuccess,
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
 export async function softDeleteFilteringCriteriaCategory(groupId) {
-  const updateSql = `UPDATE filtering_criteria_category SET is_deleted = 1 WHERE groupId = ?`
+  const updateSql = `UPDATE filtering_criteria_category SET is_deleted = 1 WHERE groupId = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [groupId], (err, result) => {
-        if (err) return reject(new Error(resposne.filterCategoryUpdateFail))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.filterCategoryUpdateFail));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.noIdFoundCategory)
+      throw new Error(resposne.noIdFoundCategory);
     }
 
-    return { message: resposne.categoryDeletedSuccess, affectedRows: result.affectedRows }
+    return {
+      message: resposne.categoryDeletedSuccess,
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
@@ -2310,112 +2218,116 @@ export function getJuryGroup() {
       WHERE e.is_deleted = 0
       AND jg.group_name IS NOT NULL
       AND jg.filtering_pattern IS NOT NULL
-    `
+    `;
 
     db.query(query, (error, results) => {
       if (error) {
-        return reject(error)
+        return reject(error);
       }
 
-      const filteredResults = results.map(result => ({
+      const filteredResults = results.map((result) => ({
         GroupId: result.juryGroupId,
         Group_Name: result.group_name,
-        Formula: result.filtering_pattern
-      }))
+        Formula: result.filtering_pattern,
+      }));
 
-      const nonNullResults = filteredResults.filter(result =>
-        result.GroupId !== null &&
-        result.Group_Name !== null &&
-        result.Formula !== null
-      )
+      const nonNullResults = filteredResults.filter(
+        (result) =>
+          result.GroupId !== null &&
+          result.Group_Name !== null &&
+          result.Formula !== null
+      );
 
-      resolve(nonNullResults)
-    })
-  })
+      resolve(nonNullResults);
+    });
+  });
 }
 
 export function checkIfDeletedFilterId(filterId) {
   return new Promise((resolve, reject) => {
-    const query = `SELECT is_deleted FROM filtering_criteria WHERE id = ?`
+    const query = `SELECT is_deleted FROM filtering_criteria WHERE id = ?`;
 
     db.query(query, [filterId], (err, results) => {
       if (err) {
-        return reject(new Error(resposne.deletionerrorCheck))
+        return reject(new Error(resposne.deletionerrorCheck));
       }
       if (results.length === 0) {
-        return reject(new Error(resposne.filterIdnotFound))
+        return reject(new Error(resposne.filterIdnotFound));
       }
-      resolve(results[0].is_deleted === 1)
-    })
-  })
+      resolve(results[0].is_deleted === 1);
+    });
+  });
 }
 
-
 export async function softDeleteGroupCriteria(filterId) {
-  const updateSql = `UPDATE filtering_criteria SET is_deleted = 1 WHERE id = ?`
+  const updateSql = `UPDATE filtering_criteria SET is_deleted = 1 WHERE id = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [filterId], (err, result) => {
-        if (err) return reject(new Error(resposne.groupCriteriaUpdateFail))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.groupCriteriaUpdateFail));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.noIdFoundGroupCriteria)
+      throw new Error(resposne.noIdFoundGroupCriteria);
     }
 
-    return { message: resposne.groupCriteriaDeletedSuccess, affectedRows: result.affectedRows }
+    return {
+      message: resposne.groupCriteriaDeletedSuccess,
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
 export async function softDeleteGroupCriteriaCategory(filterId) {
-  const updateSql = `UPDATE filtering_criteria_category SET is_deleted = 1 WHERE filterId = ?`
+  const updateSql = `UPDATE filtering_criteria_category SET is_deleted = 1 WHERE filterId = ?`;
 
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(updateSql, [filterId], (err, result) => {
-        if (err) return reject(new Error(resposne.groupCategoryUpdateFail))
-        resolve(result)
-      })
-    })
+        if (err) return reject(new Error(resposne.groupCategoryUpdateFail));
+        resolve(result);
+      });
+    });
 
     if (result.affectedRows === 0) {
-      throw new Error(resposne.noIdFoundGroupCategory)
+      throw new Error(resposne.noIdFoundGroupCategory);
     }
 
-    return { message: resposne.groupCategoryDeletedSuccess, affectedRows: result.affectedRows }
+    return {
+      message: resposne.groupCategoryDeletedSuccess,
+      affectedRows: result.affectedRows,
+    };
   } catch (error) {
     // console.error(error)
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 }
 
 export function getJuryName() {
-
   return new Promise((resolve, reject) => {
-
     const query = `
         SELECT 
           email
           FROM jury_assign 
           WHERE is_deleted = 0   
-      `
+      `;
 
     db.query(query, (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
 
       resolve({
         Judges: results.length ? results : [],
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
 export function getAdminProfile(adminId) {
@@ -2433,20 +2345,20 @@ export function getAdminProfile(adminId) {
         profile_image
       FROM admin
       WHERE id = ? AND is_deleted = 0
-    `
+    `;
 
     db.query(query, [adminId], (err, results) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       }
       if (results.length === 0) {
-        return reject(new Error('No Admin found for the given ID'))
+        return reject(new Error("No Admin found for the given ID"));
       }
       resolve({
         admins: results,
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
 export async function createCoupon(
@@ -2470,7 +2382,7 @@ INSERT INTO coupons (
     start_date,
     end_date)VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 
-  `
+  `;
   const values = [
     eventId,
     category,
@@ -2479,40 +2391,42 @@ INSERT INTO coupons (
     percent_off,
     coupon_amount,
     start_date,
-    end_date
-  ]
+    end_date,
+  ];
   try {
     const result = await new Promise((resolve, reject) => {
       db.query(insertSql, values, (insertError, result) => {
         if (insertError) {
-          return reject(new Error(`Database insert Error : ${insertError.message}`))
+          return reject(
+            new Error(`Database insert Error : ${insertError.message}`)
+          );
         }
         if (result.insertId) {
-          resolve(result.insertId)
+          resolve(result.insertId);
         } else {
-          reject(new Error(resposne.couponFail))
+          reject(new Error(resposne.couponFail));
         }
-      })
-    })
+      });
+    });
     return {
       id: result,
-      message: resposne.couponSuccess
-    }
+      message: resposne.couponSuccess,
+    };
   } catch (error) {
-    throw new Error(`Database error: ${error.message}`)
+    throw new Error(`Database error: ${error.message}`);
   }
 }
 export function checkAwardId(awardId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM awards_category WHERE id = ?"
+    const query = "SELECT * FROM awards_category WHERE id = ?";
     db.query(query, [awardId], (err, results) => {
       if (err) {
-        reject(err)
+        reject(err);
       } else {
-        resolve(results.length > 0 ? true : false)
+        resolve(results.length > 0 ? true : false);
       }
-    })
-  })
+    });
+  });
 }
 
 export async function getAwardById(awardId) {
@@ -2544,9 +2458,9 @@ export async function getAwardById(awardId) {
         if (results.length > 0) {
           return resolve(results[0]);
         } else {
-          reject(new Error('Award not found'));
+          reject(new Error("Award not found"));
         }
-        console.log("ressss", results)
+        console.log("ressss", results);
       });
     });
 
@@ -2560,89 +2474,178 @@ export function searchEvent(search) {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT * FROM event_details 
-      WHERE event_name LIKE ? AND is_deleted = 0`
+      WHERE event_name LIKE ? AND is_deleted = 0`;
 
-    const values = [`%${search}%`]
+    const values = [`%${search}%`];
 
     db.query(query, values, (error, results) => {
       if (error) {
-        reject(error)
+        reject(error);
       } else {
-        resolve(results)
+        resolve(results);
       }
-    })
-  })
+    });
+  });
 }
-
 
 //----------------------------------------- dynamic from create  ----------------------------------------------//
 
-
-
-// Create Registration Form
 export const createRegistrationFormService = (eventId, form_schema) => {
   return new Promise((resolve, reject) => {
-      const query = `INSERT INTO registration_form (eventId, form_schema) VALUES (?, ?)`;
-      db.query(query, [eventId, JSON.stringify(form_schema)], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-      });
+    const query = `
+      INSERT INTO registration_form (eventId, form_schema) 
+      VALUES (?, ?);
+    `;
+
+    db.query(query, [eventId, JSON.stringify(form_schema)], (err, result) => {
+      if (err) {
+        reject(new Error(`Database insert error: ${err.message}`));
+      } else if (result.insertId) {
+        resolve({
+          insertId: result.insertId,
+          affectedRows: result.affectedRows,
+        });
+      } else {
+        reject(new Error("Erorr while Creating Registration Form Failed"));
+      }
+    });
   });
 };
-
-// Get Registration Form by Event ID and registrationFormId
-export const getRegistrationFormService = (eventId, registrationFormId) => {
+export function checkRegFormId(registrationFormId) {
   return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM registration_form WHERE eventId = ? AND id = ? AND is_deleted = 0`;
-      db.query(query, [eventId, registrationFormId], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-      });
+    const query = "SELECT * FROM registration_form WHERE id = ?";
+    db.query(query, [registrationFormId], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results.length > 0 ? true : false);
+      }
+    });
   });
+}
+export const getRegistrationFormService = async (
+  eventId,
+  registrationFormId
+) => {
+  const query = `SELECT * FROM registration_form 
+    WHERE eventId = ? 
+    AND id = ? 
+    AND is_deleted = 0`;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(query, [eventId, registrationFormId], (err, result) => {
+        if (err) {
+          reject(new Error(`Database query error: ${err.message}`));
+        } else {
+          resolve(result);
+        }
+      });
+    });
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error(`Error fetching registration form: ${error.message}`);
+  }
 };
 
 // Update Registration Form
-export const updateRegistrationFormService = (eventId, form_schema) => {
-  return new Promise((resolve, reject) => {
-      const query = `UPDATE registration_form SET form_schema = ? WHERE eventId = ? AND is_deleted = 0`;
-      db.query(query, [JSON.stringify(form_schema), eventId], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
+export const updateRegistrationFormService = async (eventId, registrationFormId, form_schema) => {
+  try {
+    const query = `UPDATE registration_form SET form_schema = ? WHERE eventId = ? AND id = ? AND is_deleted = 0`;
+    const result = await new Promise((resolve, reject) => {
+      db.query(query, [JSON.stringify(form_schema), eventId, registrationFormId], (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
       });
-  });
+    });
+    return result;
+  } catch (err) {
+    throw err;
+  }
 };
 
 // Create Entry Form
 export const createEntryFormService = (eventId, form_schema) => {
   return new Promise((resolve, reject) => {
-      const query = `INSERT INTO entry_form (eventId, form_schema) VALUES (?, ?)`;
-      db.query(query, [eventId, JSON.stringify(form_schema)], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-      });
+    const query = `
+      INSERT INTO entry_form (eventId, form_schema) 
+      VALUES (?, ?);
+    `;
+
+    db.query(query, [eventId, JSON.stringify(form_schema)], (err, result) => {
+      if (err) {
+        reject(new Error(`Database insert error: ${err.message}`));
+      } else if (result.insertId) {
+        resolve({
+          insertId: result.insertId,
+          affectedRows: result.affectedRows,
+        });
+      } else {
+        reject(new Error("Error while creating entry form"));
+      }
+    });
   });
 };
 
-// Get Entry Form by Event ID
-export const getEntryFormService = (eventId) => {
+export function checkentryFormId(entryFormId) {
   return new Promise((resolve, reject) => {
-      const query = `SELECT * FROM entry_form WHERE eventId = ? AND is_deleted = 0`;
-      db.query(query, [eventId], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-      });
+    const query = "SELECT * FROM entry_form WHERE id = ?";
+    db.query(query, [entryFormId], (err, results) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(results.length > 0 ? true : false);
+      }
+    });
   });
+}
+
+export const getEntryFormService = async (eventId, entryFormId) => {
+  const query = `SELECT * FROM entry_form WHERE eventId = ? AND id = ? AND is_deleted = 0`;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(query, [eventId, entryFormId], (err, result) => {
+        if (err) {
+          reject(new Error(`Database query error: ${err.message}`));
+        } else {
+          resolve(result);
+        }
+      });
+    });
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result;
+  } catch (error) {
+    throw new Error(`Error fetching entry form: ${error.message}`);
+  }
 };
 
-// Update Entry Form
-export const updateEntryFormService = (eventId, form_schema) => {
-  return new Promise((resolve, reject) => {
-      const query = `UPDATE entry_form SET form_schema = ? WHERE eventId = ? AND is_deleted = 0`;
-      db.query(query, [JSON.stringify(form_schema), eventId], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
+export const updateEntryFormService = async (eventId, entryFormId, form_schema) => {
+  const query = `UPDATE entry_form SET form_schema = ? WHERE eventId = ? AND id = ? AND is_deleted = 0`;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(query, [JSON.stringify(form_schema), eventId, entryFormId], (err, result) => {
+        if (err) reject(new Error(`Database update error: ${err.message}`));
+        else resolve(result);
       });
-  });
+    });
+
+    // Return both affectedRows and entryFormId for better clarity
+    return {
+      affectedRows: result.affectedRows,
+      entryFormId: entryFormId, // Return the updated entry form ID
+    };
+  } catch (err) {
+    throw new Error(`Error updating entry form: ${err.message}`);
+  }
 };
-
-
