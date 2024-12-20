@@ -29,7 +29,7 @@ import {
   addSubmissionId,
   publiclyVisible,
   generalSettings,
-    CreateScorecardCriteria,
+  CreateScorecardCriteria,
   overallScorecardValue,
   CreateCriteriaSettingValues,
   criteriaSettings,
@@ -80,6 +80,8 @@ import {
   updateAdditionalEmails,
   statusEvent,
   updatedIndustryTypes,
+  getgeneralSettings,
+  updateGeneralSettings,
 } from "../service/adminService.js";
 import resposne from "../middleware/resposne.js";
 import path from "path";
@@ -1288,7 +1290,7 @@ export const CreateGeneralSettings = async (req, res) => {
 
   if (role !== "admin") {
     return res.status(400).json({
-      status: resposne.successFalse, 
+      status: resposne.successFalse,
       message: resposne.unauth,
     });
   }
@@ -1299,7 +1301,7 @@ export const CreateGeneralSettings = async (req, res) => {
     start_time,
     end_date,
     end_time,
-    is_active = 0,  
+    is_active = 0,
     is_one_at_a_time = 0,
     is_individual_category_assigned = 0,
     is_Completed_Submission = 0,
@@ -1310,7 +1312,7 @@ export const CreateGeneralSettings = async (req, res) => {
     is_total = 0,
     is_jury_others_score = 0,
     is_abstain = 0,
-    overall_score = 0,
+    overall_score = null,
   } = req.body;
 
   const eventIdCheck = await checkeventId(eventId);
@@ -1350,12 +1352,109 @@ export const CreateGeneralSettings = async (req, res) => {
     } else {
       return res.status(400).json({
         status: resposne.successFalse,
-        message: resposne.generalsettingsError,  
+        message: resposne.generalsettingsError,
       });
     }
-    
+
   } catch (error) {
     return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    });
+  }
+};
+
+export const generalSettingsget = async (req, res) => {
+  const role = req.user.role;
+
+  if (role !== "admin") {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    });
+  }
+
+  const { eventId } = req.query;
+  if(!eventId){
+    return res.status(400).json({
+      status:resposne.successFalse,
+      message:resposne.eventIdfail
+    })
+  }
+
+  const eventIdCheck = await checkeventId(eventId);
+
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail,
+    });
+  }
+
+  try {
+    const result = await getgeneralSettings(eventId);
+
+    if (result.length === 0) {
+      res.status(400).json({
+        status: resposne.successFalse,
+        message: resposne.nodatavail,
+      });
+    } else {
+      res.status(200).json({
+        status: resposne.successTrue,
+        message: resposne.fetchSuccess,
+        data: result,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      status: resposne.successFalse,
+      message: error.message,
+    });
+  }
+};
+
+export const generalSettingsUpdate = async (req, res) => {
+  const role = req.user.role;
+
+  // Check if the user is an admin
+  if (role !== "admin") {
+    return res.status(403).json({
+      status: resposne.successFalse,
+      message: resposne.unauth,
+    });
+  }
+
+  const { eventId, ...updates } = req.body;
+
+  // Validate if the eventId exists
+  const eventIdCheck = await checkeventId(eventId);
+  if (!eventIdCheck) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.eventIdfail,
+    });
+  }
+
+  // Ensure that there are updates to process
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: resposne.noupdate,
+    });
+  }
+
+  try {
+    // Perform the update operation
+    const result = await updateGeneralSettings(updates, eventId);
+
+    return res.status(200).json({
+      status: resposne.successTrue,
+      message: result.message, // If message exists in result, use it
+    });
+  } catch (error) {
+    // Catch any errors during the process
+    return res.status(500).json({
       status: resposne.successFalse,
       message: error.message ,
     });

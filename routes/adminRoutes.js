@@ -1,6 +1,6 @@
 import express from "express"
-import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, createEntryForm, CreateGeneralSettings, createRegistrationForm, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, eventCreate,  EventStatus,  eventUpdate, eventupdateSocial, exportCsv, getEntryFormByEventId, getRegistrationFormByEventId, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, SearchEvent, sendOTP, SubmissionFormatCreate, updateEntryForm, updateforgetPassword, updateProfile, updateRegistrationForm, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
-import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory, validateRegistartionForm, validateRegistartionFormGet, validateRegistartionFormUpdate, validateEntryForm, validateEntryFormGet, validateEntryFormUpdate, ValidateEventStatus } from '../validation/AdminValidation.js'
+import { AdminProfileget, AssignJuryCreate, AwardByIdget, awardCreate, Awardsget, awardUpdate, CreateCoupon, createEntryForm, CreateGeneralSettings, createRegistrationForm, CriteriaSettingCreate, CriteriaSettingUpdate, dashboardEvents, deleteAward, deleteGroupCriteria, deleteJuryGroup, deleteScoreCard, eventCreate, EventStatus, eventUpdate, eventupdateSocial, exportCsv, generalSettingsget, generalSettingsUpdate, getEntryFormByEventId, getRegistrationFormByEventId, juryGroupCreate, JuryGroupGet, juryGroupUpdate, JuryNameget, loginseller, MyEventget, MyEventsget, NewPassword, ScorecardCreate, Scorecardget, ScorecardUpdate, SearchEvent, sendOTP, SubmissionFormatCreate, updateEntryForm, updateforgetPassword, updateProfile, updateRegistrationForm, usercreate, verifyOTPHandler, visiblePublicly } from '../controller/adminController.js'
+import { validateAdmin, validateAdminLogin, validateotp, validateAwardCreate, validateNewPass, validateVerifyOtp, validateupdateForgetPassword, validateAwardCategoryUpdate, validateUpdateEventCreate, validateUpdateEventSocial, ValidateSubmissionIDformat, ValidateAwardDirectory, ValidategeneralSettings, ValidateScoreCardCriteria, ValidateJuryGroupCreate, ValidateAssignJuryCreate, ValidateScoreCardUpdate, ValidateCriteriaSettingsCreate, ValidateCriteriaSettingUpdate, ValidateJuryGroupUpdate, ValidateCouponCreate, validatefilterCategory, validateRegistartionForm, validateRegistartionFormGet, validateRegistartionFormUpdate, validateEntryForm, validateEntryFormGet, validateEntryFormUpdate, ValidateEventStatus, validategenSettingGet, validategenSettingUpdate } from '../validation/AdminValidation.js'
 import authenticate from '../middleware/authentication.js'
 import upload from '../middleware/multer.js'
 
@@ -72,12 +72,16 @@ router.post('/couponCreate', authenticate, ValidateCouponCreate, CreateCoupon)//
 
 //--------------------------------------- draft to live or archive -----------------------------------------//
 
-router.post('/eventStatus', authenticate, ValidateEventStatus, EventStatus)
+router.post('/eventStatus', authenticate, ValidateEventStatus, EventStatus)//& Ok tested
 
 //----------------------------------------- Manage Jury ----------------------------------------------//
 
-router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGeneralSettings)
+router.post('/generalSettings', authenticate, ValidategeneralSettings, CreateGeneralSettings)//& Ok tested
 
+router.get('/generalSettings', authenticate, validategenSettingGet, generalSettingsget)//& Ok tested
+
+router.post('/updateGenSettings', authenticate, validategenSettingUpdate, generalSettingsUpdate)//& Ok tested
+ 
 //----------------------------------------- ScoreCard Create ----------------------------------------------//
 
 router.post('/scorecardCreate', authenticate, ValidateScoreCardCriteria, ScorecardCreate)
@@ -119,11 +123,11 @@ router.get('/registrationForm', authenticate, validateRegistartionFormGet, getRe
 router.put('/registrationFormUp', authenticate, validateRegistartionFormUpdate, updateRegistrationForm);
 
 // Entry Form Routes
-router.post('/entryForm',authenticate, validateEntryForm,createEntryForm);
+router.post('/entryForm', authenticate, validateEntryForm, createEntryForm);
 
-router.get('/entryForm',authenticate,validateEntryFormGet, getEntryFormByEventId); 
+router.get('/entryForm', authenticate, validateEntryFormGet, getEntryFormByEventId);
 
-router.put('/entryForm',authenticate,validateEntryFormUpdate, updateEntryForm);
+router.put('/entryForm', authenticate, validateEntryFormUpdate, updateEntryForm);
 
 //----------------------------------------- with the 5000 port  ----------------------------------------------//
 

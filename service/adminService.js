@@ -1152,7 +1152,7 @@ export const updateAdditionalEmails = async (eventId, additional_email) => {
         if (insertError) {
           reject(insertError);
         } else {
-          resolve(result.affectedRows); 
+          resolve(result.affectedRows);
         }
       });
     });
@@ -1190,12 +1190,13 @@ export const updatedIndustryTypes = async (eventId, industry_type) => {
           reject(insertError);
         } else {
           // console.log('Industry Types Inserted:', result.affectedRows); // Debugging log
-          resolve(result.affectedRows); 
+          resolve(result.affectedRows);
         }
       });
     });
   });
 };
+
 export const updateEventSocial = (updates, eventId) => {
   return new Promise((resolve, reject) => {
     const updateFields = [];
@@ -1423,7 +1424,7 @@ export async function generalSettings(
     is_total,
     is_jury_others_score,
     is_abstain,
-    overall_score ,
+    overall_score,
   ];
 
   try {
@@ -1461,7 +1462,7 @@ export async function statusEvent(eventId, updates) {
     SET is_live = ?, is_draft = ?, is_archive = ? 
     WHERE id = ?`;
 
-  const values = [is_live, is_draft, is_archive, eventId];  
+  const values = [is_live, is_draft, is_archive, eventId];
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -2648,4 +2649,76 @@ export const updateEntryFormService = async (eventId, entryFormId, form_schema) 
   } catch (err) {
     throw new Error(`Error updating entry form: ${err.message}`);
   }
+};
+
+
+export const getgeneralSettings = async (eventId) => {
+  const query = `SELECT * FROM general_settings 
+                WHERE eventId = ? 
+                AND is_deleted = 0;`
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(query, eventId, (err, result) => {
+        if (err) {
+          reject(new Error(`Database query error: ${err.message}`));
+        } else {
+          resolve(result);
+        }
+      });
+    });
+
+    if (result.length === 0) {
+      return null || "no data found";
+    }
+
+    return result[0];
+  } catch (error) {
+    throw new Error(`Error fetching registration form: ${error.message}`);
+  }
+};
+
+export const updateGeneralSettings = async (updates, eventId) => {
+  return new Promise((resolve, reject) => {
+    db.beginTransaction((err) => {
+      if (err) {
+        return reject(new Error("Failed to begin transaction"));
+      }
+
+      try {
+        const updateFields = Object.keys(updates)
+          .map((field) => `${field} = ?`)
+          .join(", ");
+        const updateValues = Object.values(updates);
+        updateValues.push(eventId);
+
+        const updateQuery = `
+          UPDATE general_settings
+          SET ${updateFields}, updated_at = NOW()
+          WHERE eventId = ?;
+        `;
+
+        db.query(updateQuery, updateValues, (err, result) => {
+          if (err) {
+            return db.rollback(() => {
+              reject(new Error("Database update failed: " + err.message));
+            });
+          }
+
+          db.commit((err) => {
+            if (err) {
+              return db.rollback(() => {
+                reject(new Error("Transaction commit failed: " + err.message));
+              });
+            }
+            resolve({
+              affectedRows: result.affectedRows,
+              message: 'General settings updated successfully.',
+            });
+          });
+        });
+      } catch (error) {
+        db.rollback(() => reject(error)); 
+      }
+    });
+  });
 };

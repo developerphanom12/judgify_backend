@@ -1359,3 +1359,97 @@ export const validateEntryFormUpdate = (req, res, next) => {
   }
   next();
 };
+
+const genSettingGet = Joi.object({
+  eventId: Joi.number().required().messages({
+    "any.required": "Event Id is required",
+    "any.empty": "Event Id is not allowed to be empty",
+  }),
+});
+
+export const validategenSettingGet = (req, res, next) => {
+  const { error } = genSettingGet.validate(req.query);
+
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message,
+    });
+  }
+
+  next();
+};
+
+
+const genSettingUpdate = Joi.object({
+  eventId: Joi.number().required().messages({
+    "number.base": "Event ID must be a number",  
+    "any.required": "Event ID is required",      
+    "number.empty": "Event ID is not allowed to be empty", 
+  }),
+  start_date: Joi.string().isoDate().optional().messages({
+    "string.base": "Start date must be a valid date string",
+    "string.isoDate": "Start date must be in ISO format",
+  }),
+  start_time: Joi.string().optional().messages({
+    "string.empty": "Start Time is not allowed to be empty",
+  }),
+  end_date: Joi.string().isoDate().optional().messages({
+    "string.base": "End date must be a valid date string",
+    "string.isoDate": "End date must be in ISO format",
+
+  }), 
+  end_time: Joi.string().optional().messages({
+    "string.empty": "End Time is not allowed to be empty",
+  }),
+  is_active: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_active must be either 0 or 1",
+  }),
+  is_one_at_a_time: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_one_at_a_time must be either 0 or 1",
+  }),
+  is_individual_category_assigned: Joi.number()
+    .valid(0, 1)
+    .optional()
+    .messages({
+      "any.only": "is_individual_category_assigned must be either 0 or 1",
+    }),
+  is_Completed_Submission: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_Completed_Submission must be either 0 or 1",
+  }),
+  is_jury_print_send_all: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_jury_print_send_all must be either 0 or 1",
+  }),
+  is_scoring_dropdown: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_scoring_dropdown must be either 0 or 1",
+  }),
+  is_comments_box_judging: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_comments_box_judging must be either 0 or 1",
+  }),
+  is_data_single_page: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_data_single_page must be either 0 or 1",
+  }),
+  is_total: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_total must be either 0 or 1",
+  }),
+  is_jury_others_score: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_jury_others_score must be either 0 or 1",
+  }),
+  is_abstain: Joi.number().valid(0, 1).optional().messages({
+    "any.only": "is_abstain must be either 0 or 1",
+  }),
+  overall_score: Joi.string().optional().messages({
+    "string.base": "Overall Score must be a string",
+  }),
+}); 
+
+export const validategenSettingUpdate = (req, res, next) => {
+  const { error } = genSettingUpdate.validate(req.body );
+  if (error) {
+    return res.status(400).json({
+      status: resposne.successFalse,
+      message: error.details[0].message,
+    });
+  }
+  next();
+};
